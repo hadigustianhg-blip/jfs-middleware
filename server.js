@@ -1,20 +1,3 @@
-const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-let AUTH_TOKEN = "11e17a31b9494b2f8875e8286666c8fb";
-
-// endpoint update token
-app.post("/set-token", (req, res) => {
-  AUTH_TOKEN = req.body.token;
-  res.json({ message: "Token updated" });
-});
-
-// endpoint ambil data
 app.get("/jfs-data", async (req, res) => {
   try {
     const response = await axios.post(
@@ -41,23 +24,23 @@ app.get("/jfs-data", async (req, res) => {
       }
     );
 
-    res.json(response.data);
+    const records = response.data.data.records;
+
+    const clean = records.map(item => ({
+      resi: item.package_number,
+      tanggal: item.scantime,
+      kurir: item.send_deliver_user,
+      tujuan: item.receiver_detailed_address,
+      berat: item.settlement_weight,
+      cod: item.cod_need
+    }));
+
+    res.json(clean);
+
   } catch (error) {
     res.status(500).json({
       error: "Gagal ambil data",
       detail: error.message
     });
   }
-});
-
-
-app.get("/", (req, res) => {
-  res.send("API JFS Middleware aktif 🚀");
-});
-
-// baru listen
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server jalan di port ${PORT}`);
 });
