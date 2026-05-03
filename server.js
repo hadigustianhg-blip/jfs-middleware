@@ -1,3 +1,27 @@
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
+
+// ✅ HARUS DI ATAS
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+let AUTH_TOKEN = "ISI_TOKEN_KAMU";
+
+// endpoint root
+app.get("/", (req, res) => {
+  res.send("API JFS Middleware aktif 🚀");
+});
+
+// endpoint update token
+app.post("/set-token", (req, res) => {
+  AUTH_TOKEN = req.body.token;
+  res.json({ message: "Token updated" });
+});
+
+// endpoint data
 app.get("/jfs-data", async (req, res) => {
   try {
     const response = await axios.post(
@@ -43,4 +67,11 @@ app.get("/jfs-data", async (req, res) => {
       detail: error.message
     });
   }
+});
+
+// ✅ PORT TERAKHIR
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server jalan di port ${PORT}`);
 });
