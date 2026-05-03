@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-let AUTH_TOKEN = "11e17a31b9494b2f8875e8286666c8fb";
+let AUTH_TOKEN = "ISI_TOKEN_KAMU";
 
 // endpoint update token
 app.post("/set-token", (req, res) => {
@@ -50,6 +50,9 @@ app.get("/jfs-data", async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log("Server jalan di http://localhost:3000");
+// ✅ FIX PORT
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server jalan di port ${PORT}`);
 });
