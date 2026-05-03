@@ -62,19 +62,27 @@ app.get("/jfs-data", async (req, res) => {
     const records = response?.data?.data?.records || [];
 
     // 🔥 bersihin data
-    const clean = records.map(item => ({
-      resi: item.package_number || "-",
-      tanggal: item.scantime || "-",
-      kurir: item.send_deliver_user || "-",
-      tujuan: item.receiver_detailed_address || "-",
-      berat: item.settlement_weight || "0",
-      cod: item.cod_need || "No"
-    }));
+  const clean = records.map(item => {
+  const datetime = item.scantime || "";
+  const [tanggal, jam] = datetime.split(" ");
 
-    res.json({
-      total: clean.length,
-      data: clean
-    });
+  return {
+    resi: item.package_number || "-",
+    tanggal: tanggal || "-",
+    jam: jam || "-",
+
+    kurir: item.send_deliver_user || "-",
+
+    // ambil kota aja biar rapi
+    tujuan: (item.receiver_detailed_address || "")
+      .split(",")[0]
+      .slice(0, 50),
+
+    berat_kg: Number(item.settlement_weight) || 0,
+
+    cod: item.cod_need === "Yes"
+  };
+});
 
   } catch (error) {
     res.status(500).json({
