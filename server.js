@@ -70,7 +70,7 @@ app.get("/jfs-data", async (req, res) => {
 });
 
 // ✅ PORT TERAKHIR
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server jalan di port ${PORT}`);
