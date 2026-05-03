@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-let AUTH_TOKEN = "ISI_TOKEN_KAMU";
+let AUTH_TOKEN = "11e17a31b9494b2f8875e8286666c8fb";
 
 // endpoint root
 app.get("/", (req, res) => {
