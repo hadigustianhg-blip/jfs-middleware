@@ -178,14 +178,20 @@ app.get("/jfs-pickup", async (req, res) => {
     // 🔥 INI YANG BENAR
     const records = response?.data?.data || [];
 
-    const clean = records.map(item => ({
-      waybillNo: item.waybillNo,
-      destination: item.destinationName,
-      weight: item.waybillWeight,
-      staff: item.collectStaffName,
-      sender: item.senderName,
-      receiver: item.receiverName
-    }));
+  const clean = allRecords.map(item => ({
+  waybillNo: item.waybillNo,
+  pickNetwork: item.pickNetworkName,
+  destination: item.destinationName,
+  settlement: item.settlementName,
+  totalFreight: item.totalFreight,
+  freight: item.freight,
+  weight: item.waybillWeight,
+  staff: item.collectStaffName,
+  sender: item.senderName,
+  service: item.expressTypeName,
+  receiver: item.receiverName,
+  address: item.receiverDetailedAddress
+}));
 
     res.json({
       total: clean.length,
