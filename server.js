@@ -1,6 +1,7 @@
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
+const FormData = require("form-data");
 
 const app = express();
 
@@ -137,50 +138,43 @@ app.get("/jfs-pickup", async (req, res) => {
     }
 
     const date = req.query.date || new Date().toISOString().slice(0, 10);
-    const site = req.query.site || "SUM001A";
 
-    let allData = [];
+    let allRecords = [];
     let current = 1;
     let hasMore = true;
 
     while (hasMore) {
-      const formData = new URLSearchParams();
+      const form = new FormData();
 
-      formData.append("current", current);
-      formData.append("size", 100);
-
-      formData.append("pickFinanceCode", "BDO000"); // sesuai payload kamu
-      formData.append("isVoid", "0");
-
-      formData.append("timeStart", `${date} 00:00:00`);
-      formData.append("timeEnd", `${date} 23:59:59`);
-
-      formData.append("inputTimeStart", `${date} 00:00:00`);
-      formData.append("inputTimeEnd", `${date} 23:59:59`);
-
-      formData.append("pickNetworkCode", site);
-
-      // wajib walau kosong
-      formData.append("waybillNos", "");
-      formData.append("customerCodes", "");
-      formData.append("settlementCodes", "");
-      formData.append("isRefundCodes", "");
-      formData.append("sourceOfWaybillCodes", "");
-      formData.append("isSigns", "");
-      formData.append("calculateFeeCodes", "");
-      formData.append("customerTypes", "");
-      formData.append("orderSourceCodes", "");
+      form.append("current", current);
+      form.append("size", 100);
+      form.append("pickFinanceCode", "BDO000");
+      form.append("isVoid", "0");
+      form.append("timeStart", `${date} 00:00:00`);
+      form.append("timeEnd", `${date} 23:59:59`);
+      form.append("waybillNos", "");
+      form.append("customerCodes", "");
+      form.append("pickNetworkCode", "SUM001A");
+      form.append("settlementCodes", "");
+      form.append("isRefundCodes", "");
+      form.append("sourceOfWaybillCodes", "");
+      form.append("isSigns", "");
+      form.append("calculateFeeCodes", "");
+      form.append("customerTypes", "");
+      form.append("orderSourceCodes", "");
+      form.append("inputTimeStart", `${date} 00:00:00`);
+      form.append("inputTimeEnd", `${date} 23:59:59`);
 
       const response = await axios.post(
         "https://jfsgw.jtcargo.co.id/networkmanagement/omsWaybill/shippingWaybillList",
-        formData,
+        form,
         {
           headers: {
+            ...form.getHeaders(),
             authtoken: AUTH_TOKEN,
             lang: "ID",
             langtype: "ID",
-            routename: "sendWaybillSite",
-            "Content-Type": "application/x-www-form-urlencoded"
+            routename: "sendWaybillSite"
           },
           timeout: 30000
         }
@@ -188,9 +182,9 @@ app.get("/jfs-pickup", async (req, res) => {
 
       const records = response?.data?.data?.records || [];
 
-      console.log(`Pickup Page ${current}: ${records.length}`);
+      allRecords = allRecords.concat(records);
 
-      allData = allData.concat(records);
+      console.log(`Pickup Page ${current} → ${records.length}`);
 
       if (records.length < 100) {
         hasMore = false;
@@ -199,18 +193,16 @@ app.get("/jfs-pickup", async (req, res) => {
       }
     }
 
-    // 🔥 CLEAN DATA SESUAI KEBUTUHAN KAMU
-    const clean = allData.map(item => ({
-      resi: item.waybillNo,
-      tanggal: item.inputTime?.split(" ")[0] || "-",
-      jam: item.inputTime?.split(" ")[1] || "-",
-      kurir: item.collectStaffName,
-      pengirim: item.senderName,
-      penerima: item.receiverName,
-      tujuan: item.receiverDetailedAddress?.slice(0, 50),
-      berat_kg: Number(item.waybillWeight),
-      ongkir: Number(item.totalFreight),
-      layanan: item.expressTypeName
+    // 🔥 CLEAN DATA
+    const clean = allRecords.map(item => ({
+      resi: item.waybillNo || "-",
+      tanggal: (item.inputTime || "").split(" ")[0] || "-",
+      jam: (item.inputTime || "").split(" ")[1] || "-",
+      kurir: item.collectStaffName || "-",
+      tujuan: item.destinationName || "-",
+      berat_kg: Number(item.waybillWeight) || 0,
+      ongkir: Number(item.totalFreight) || 0,
+      status: item.settlementName || "-"
     }));
 
     res.json({
@@ -220,7 +212,7 @@ app.get("/jfs-pickup", async (req, res) => {
 
   } catch (error) {
     res.status(500).json({
-      error: "pickup error",
+      error: "Gagal ambil pickup",
       detail: error.response?.data || error.message
     });
   }
