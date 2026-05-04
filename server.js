@@ -128,7 +128,7 @@ app.get("/jfs-data", async (req, res) => {
     });
   }
 });
-// ================= API PICKUP =================
+// // ================= API PICKUP =================
 app.get("/jfs-pickup", async (req, res) => {
   try {
     if (!AUTH_TOKEN) {
@@ -139,70 +139,52 @@ app.get("/jfs-pickup", async (req, res) => {
 
     const date = req.query.date || new Date().toISOString().slice(0, 10);
 
-    let allRecords = [];
-    let current = 1;
-    let hasMore = true;
+    const form = new FormData();
 
-    while (hasMore) {
-      const form = new FormData();
+    form.append("current", 1);
+    form.append("size", 20);
+    form.append("pickFinanceCode", "BDO000");
+    form.append("isVoid", "0");
+    form.append("timeStart", `${date} 00:00:00`);
+    form.append("timeEnd", `${date} 23:59:59`);
+    form.append("waybillNos", "");
+    form.append("customerCodes", "");
+    form.append("pickNetworkCode", "SUM001A");
+    form.append("settlementCodes", "");
+    form.append("isRefundCodes", "");
+    form.append("sourceOfWaybillCodes", "");
+    form.append("isSigns", "");
+    form.append("calculateFeeCodes", "");
+    form.append("customerTypes", "");
+    form.append("orderSourceCodes", "");
+    form.append("inputTimeStart", `${date} 00:00:00`);
+    form.append("inputTimeEnd", `${date} 23:59:59`);
 
-      form.append("current", current);
-      form.append("size", 100);
-      form.append("pickFinanceCode", "");
-      form.append("isVoid", "0");
-      form.append("timeStart", `${date} 00:00:00`);
-      form.append("timeEnd", `${date} 23:59:59`);
-      form.append("waybillNos", "");
-      form.append("customerCodes", "");
-      form.append("pickNetworkCode", "");
-      form.append("settlementCodes", "");
-      form.append("isRefundCodes", "");
-      form.append("sourceOfWaybillCodes", "");
-      form.append("isSigns", "");
-      form.append("calculateFeeCodes", "");
-      form.append("customerTypes", "");
-      form.append("orderSourceCodes", "");
-      form.append("inputTimeStart", `${date} 00:00:00`);
-      form.append("inputTimeEnd", `${date} 23:59:59`);
-
-      const response = await axios.post(
-        "https://jfsgw.jtcargo.co.id/networkmanagement/omsWaybill/shippingWaybillList",
-        form,
-        {
-          headers: {
-            ...form.getHeaders(),
-            authtoken: AUTH_TOKEN,
-            lang: "ID",
-            langtype: "ID",
-            routename: "sendWaybillSite"
-          },
-          timeout: 30000
-        }
-      );
-
-      const records = response?.data?.data?.records || [];
-
-      allRecords = allRecords.concat(records);
-
-      console.log(`Pickup Page ${current} → ${records.length}`);
-
-      if (records.length < 100) {
-        hasMore = false;
-      } else {
-        current++;
+    const response = await axios.post(
+      "https://jfsgw.jtcargo.co.id/networkmanagement/omsWaybill/shippingWaybillList",
+      form,
+      {
+        headers: {
+          ...form.getHeaders(),
+          authtoken: AUTH_TOKEN,
+          lang: "ID",
+          langtype: "ID",
+          routename: "sendWaybillSite"
+        },
+        timeout: 30000
       }
-    }
+    );
 
-    // 🔥 CLEAN DATA
-    const clean = allRecords.map(item => ({
-      resi: item.waybillNo || "-",
-      tanggal: (item.inputTime || "").split(" ")[0] || "-",
-      jam: (item.inputTime || "").split(" ")[1] || "-",
-      kurir: item.collectStaffName || "-",
-      tujuan: item.destinationName || "-",
-      berat_kg: Number(item.waybillWeight) || 0,
-      ongkir: Number(item.totalFreight) || 0,
-      status: item.settlementName || "-"
+    // 🔥 INI YANG BENAR
+    const records = response?.data?.data || [];
+
+    const clean = records.map(item => ({
+      waybillNo: item.waybillNo,
+      destination: item.destinationName,
+      weight: item.waybillWeight,
+      staff: item.collectStaffName,
+      sender: item.senderName,
+      receiver: item.receiverName
     }));
 
     res.json({
@@ -212,11 +194,12 @@ app.get("/jfs-pickup", async (req, res) => {
 
   } catch (error) {
     res.status(500).json({
-      error: "Gagal ambil pickup",
+      error: "Gagal ambil data pickup",
       detail: error.response?.data || error.message
     });
   }
 });
+    
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
