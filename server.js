@@ -1,37 +1,5 @@
-const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
-
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-// 🔐 Ambil token dari ENV (Railway)
-let AUTH_TOKEN = process.env.AUTH_TOKEN || "";
-
-// ✅ ROOT
-app.get("/", (req, res) => {
-  res.send("API JFS Middleware aktif 🚀");
-});
-
-// ✅ UPDATE TOKEN (via URL biar gampang)
-app.get("/set-token", (req, res) => {
-  if (!req.query.token) {
-    return res.status(400).json({ error: "Token wajib diisi" });
-  }
-
-  AUTH_TOKEN = req.query.token;
-  res.json({
-    message: "Token berhasil diupdate",
-    token: AUTH_TOKEN
-  });
-});
-
-// ✅ API DATA
 app.get("/jfs-data", async (req, res) => {
   try {
-    // 🔥 ambil dari query (dynamic)
     const date = req.query.date || new Date().toISOString().slice(0, 10);
     const site = req.query.site || "SUM001A";
 
@@ -44,11 +12,12 @@ app.get("/jfs-data", async (req, res) => {
         wayType: "1",
         sqlCode: "realtime_sca_del_mon_dtl",
         current: 1,
-        size: 50,
+        size: 20, // 🔥 diperkecil
         paginationSearchType: "list",
         countryId: "1"
       },
       {
+        timeout: 15000, // 🔥 biar ga ngegantung
         headers: {
           authtoken: AUTH_TOKEN,
           lang: "ID",
@@ -61,28 +30,28 @@ app.get("/jfs-data", async (req, res) => {
 
     const records = response?.data?.data?.records || [];
 
-    // 🔥 bersihin data
-  const clean = records.map(item => {
-  const datetime = item.scantime || "";
-  const [tanggal, jam] = datetime.split(" ");
+    const clean = records.map(item => {
+      const datetime = item.scantime || "";
+      const [tanggal, jam] = datetime.split(" ");
 
-  return {
-    resi: item.package_number || "-",
-    tanggal: tanggal || "-",
-    jam: jam || "-",
+      return {
+        resi: item.package_number || "-",
+        tanggal: tanggal || "-",
+        jam: jam || "-",
+        kurir: item.send_deliver_user || "-",
+        tujuan: (item.receiver_detailed_address || "")
+          .split(",")[0]
+          .slice(0, 50),
+        berat_kg: Number(item.settlement_weight) || 0,
+        cod: item.cod_need === "Yes"
+      };
+    });
 
-    kurir: item.send_deliver_user || "-",
-
-    // ambil kota aja biar rapi
-    tujuan: (item.receiver_detailed_address || "")
-      .split(",")[0]
-      .slice(0, 50),
-
-    berat_kg: Number(item.settlement_weight) || 0,
-
-    cod: item.cod_need === "Yes"
-  };
-});
+    // ✅ WAJIB ADA
+    res.json({
+      total: clean.length,
+      data: clean
+    });
 
   } catch (error) {
     res.status(500).json({
@@ -90,11 +59,4 @@ app.get("/jfs-data", async (req, res) => {
       detail: error.response?.data || error.message
     });
   }
-});
-
-// ✅ PORT (WAJIB UNTUK RAILWAY)
-const PORT = process.env.PORT;
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server jalan di port ${PORT}`);
 });
