@@ -1,3 +1,36 @@
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
+
+// ✅ HARUS ADA
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// 🔐 token
+let AUTH_TOKEN = process.env.AUTH_TOKEN || "";
+
+// ROOT
+app.get("/", (req, res) => {
+  res.send("API JFS Middleware aktif 🚀");
+});
+
+// UPDATE TOKEN
+app.get("/set-token", (req, res) => {
+  if (!req.query.token) {
+    return res.status(400).json({ error: "Token wajib diisi" });
+  }
+
+  AUTH_TOKEN = req.query.token;
+
+  res.json({
+    message: "Token berhasil diupdate",
+    token: AUTH_TOKEN
+  });
+});
+
+// API DATA
 app.get("/jfs-data", async (req, res) => {
   try {
     const date = req.query.date || new Date().toISOString().slice(0, 10);
@@ -12,12 +45,12 @@ app.get("/jfs-data", async (req, res) => {
         wayType: "1",
         sqlCode: "realtime_sca_del_mon_dtl",
         current: 1,
-        size: 20, // 🔥 diperkecil
+        size: 20,
         paginationSearchType: "list",
         countryId: "1"
       },
       {
-        timeout: 15000, // 🔥 biar ga ngegantung
+        timeout: 15000,
         headers: {
           authtoken: AUTH_TOKEN,
           lang: "ID",
@@ -47,7 +80,6 @@ app.get("/jfs-data", async (req, res) => {
       };
     });
 
-    // ✅ WAJIB ADA
     res.json({
       total: clean.length,
       data: clean
@@ -59,4 +91,11 @@ app.get("/jfs-data", async (req, res) => {
       detail: error.response?.data || error.message
     });
   }
+});
+
+// PORT
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server jalan di port ${PORT}`);
 });
