@@ -148,13 +148,13 @@ app.get("/jfs-pickup", async (req, res) => {
 
       form.append("current", current);
       form.append("size", 100);
-      form.append("pickFinanceCode", "BDO000");
+      form.append("pickFinanceCode", "");
       form.append("isVoid", "0");
       form.append("timeStart", `${date} 00:00:00`);
       form.append("timeEnd", `${date} 23:59:59`);
       form.append("waybillNos", "");
       form.append("customerCodes", "");
-      form.append("pickNetworkCode", "SUM001A");
+      form.append("pickNetworkCode", "");
       form.append("settlementCodes", "");
       form.append("isRefundCodes", "");
       form.append("sourceOfWaybillCodes", "");
