@@ -41,39 +41,57 @@ app.get("/jfs-data", async (req, res) => {
     const date = req.query.date || new Date().toISOString().slice(0, 10);
     const site = req.query.site || "SUM001A";
 
-    const response = await axios.post(
-      "https://jfsgw.jtcargo.co.id/jfs-report-leader/report/dynamicReport/findByPagination",
-      {
-        scanSiteCode: site,
-        beginDate: `${date} 00:00:00`,
-        endDate: `${date} 23:59:59`,
-        wayType: "1",
-        sqlCode: "realtime_sca_del_mon_dtl",
-        current: 1,
-        size: 20,
-        paginationSearchType: "list",
-        countryId: "1"
-      },
-      {
-        timeout: 15000,
-        headers: {
-          authtoken: AUTH_TOKEN,
-          lang: "ID",
-          langtype: "ID",
-          routename:
-            "Bd-theme-b523b95e-a48c-48f3-8655-86b3fcaf6406|businessIndicatorIndex"
-        }
-      }
-    );
+    let allRecords = [];
+    let current = 1;
+    let hasMore = true;
 
-    const records = response?.data?.data?.records || [];
+    // 🔥 LOOP SEMUA PAGE
+    while (hasMore) {
+      const response = await axios.post(
+        "https://jfsgw.jtcargo.co.id/jfs-report-leader/report/dynamicReport/findByPagination",
+        {
+          scanSiteCode: site,
+          beginDate: `${date} 00:00:00`,
+          endDate: `${date} 23:59:59`,
+          wayType: "1",
+          sqlCode: "realtime_sca_del_mon_dtl",
+          current: current,
+          size: 100, // 🔥 maksimal biar cepat
+          paginationSearchType: "list",
+          countryId: "1"
+        },
+        {
+          timeout: 30000,
+          headers: {
+            authtoken: AUTH_TOKEN,
+            lang: "ID",
+            langtype: "ID",
+            routename:
+              "Bd-theme-b523b95e-a48c-48f3-8655-86b3fcaf6406|businessIndicatorIndex"
+          }
+        }
+      );
+
+      const records = response?.data?.data?.records || [];
+
+      allRecords = allRecords.concat(records);
+
+      console.log(`Page ${current} → ${records.length} data`);
+
+      // stop kalau data terakhir
+      if (records.length < 100) {
+        hasMore = false;
+      } else {
+        current++;
+      }
+    }
 
     // ================= CLEAN DATA =================
-    const clean = records.map(item => {
+    const clean = allRecords.map(item => {
       const datetime = item.scantime || "";
       const [tanggal, jam] = datetime.split(" ");
 
-      // 🔥 LOGIKA STATUS
+      // 🔥 STATUS LOGIC
       let status = "PENDING";
 
       if (item.signsite) {
@@ -83,22 +101,17 @@ app.get("/jfs-data", async (req, res) => {
       }
 
       return {
-        resi: item.billcode || "-", // ✅ RESI FIX
+        resi: item.billcode || "-",
         tanggal: tanggal || "-",
         jam: jam || "-",
-
         kurir: item.send_deliver_user || "-",
-
         tujuan: (item.receiver_detailed_address || "")
           .split(",")[0]
           .slice(0, 50),
-
         berat_kg: Number(item.settlement_weight) || 0,
-
         cod: item.cod_need === "Yes",
-
-        status: status,              // 🔥 STATUS BARU
-        signsite: item.signsite || "-" // 🔥 OPTIONAL TRACKING
+        status: status,
+        signsite: item.signsite || "-"
       };
     });
 
