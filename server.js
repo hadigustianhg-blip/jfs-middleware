@@ -129,6 +129,7 @@ app.get("/jfs-data", async (req, res) => {
   }
 });
 // // ================= API PICKUP =================
+// ================= API PICKUP =================
 app.get("/jfs-pickup", async (req, res) => {
   try {
     if (!AUTH_TOKEN) {
@@ -139,59 +140,77 @@ app.get("/jfs-pickup", async (req, res) => {
 
     const date = req.query.date || new Date().toISOString().slice(0, 10);
 
-    const form = new FormData();
+    let allRecords = [];
+    let current = 1;
+    let hasMore = true;
 
-    form.append("current", 1);
-    form.append("size", 100);
-    form.append("pickFinanceCode", "BDO000");
-    form.append("isVoid", "0");
-    form.append("timeStart", `${date} 00:00:00`);
-    form.append("timeEnd", `${date} 23:59:59`);
-    form.append("waybillNos", "");
-    form.append("customerCodes", "");
-    form.append("pickNetworkCode", "SUM001A");
-    form.append("settlementCodes", "");
-    form.append("isRefundCodes", "");
-    form.append("sourceOfWaybillCodes", "");
-    form.append("isSigns", "");
-    form.append("calculateFeeCodes", "");
-    form.append("customerTypes", "");
-    form.append("orderSourceCodes", "");
-    form.append("inputTimeStart", `${date} 00:00:00`);
-    form.append("inputTimeEnd", `${date} 23:59:59`);
+    while (hasMore) {
+      const form = new FormData();
 
-    const response = await axios.post(
-      "https://jfsgw.jtcargo.co.id/networkmanagement/omsWaybill/shippingWaybillList",
-      form,
-      {
-        headers: {
-          ...form.getHeaders(),
-          authtoken: AUTH_TOKEN,
-          lang: "ID",
-          langtype: "ID",
-          routename: "sendWaybillSite"
-        },
-        timeout: 30000
+      form.append("current", current);
+      form.append("size", 100);
+      form.append("pickFinanceCode", "BDO000");
+      form.append("isVoid", "0");
+      form.append("timeStart", `${date} 00:00:00`);
+      form.append("timeEnd", `${date} 23:59:59`);
+      form.append("waybillNos", "");
+      form.append("customerCodes", "");
+      form.append("pickNetworkCode", "SUM001A");
+      form.append("settlementCodes", "");
+      form.append("isRefundCodes", "");
+      form.append("sourceOfWaybillCodes", "");
+      form.append("isSigns", "");
+      form.append("calculateFeeCodes", "");
+      form.append("customerTypes", "");
+      form.append("orderSourceCodes", "");
+      form.append("inputTimeStart", `${date} 00:00:00`);
+      form.append("inputTimeEnd", `${date} 23:59:59`);
+
+      const response = await axios.post(
+        "https://jfsgw.jtcargo.co.id/networkmanagement/omsWaybill/shippingWaybillList",
+        form,
+        {
+          headers: {
+            ...form.getHeaders(),
+            authtoken: AUTH_TOKEN,
+            lang: "ID",
+            langtype: "ID",
+            routename: "sendWaybillSite"
+          },
+          timeout: 60000
+        }
+      );
+
+      // 🔥 ambil data per page
+      const records = response?.data?.data || [];
+
+      allRecords = allRecords.concat(records);
+
+      console.log(`Pickup Page ${current} → ${records.length}`);
+
+      // 🔥 stop kalau sudah habis
+      if (records.length < 100) {
+        hasMore = false;
+      } else {
+        current++;
       }
-    );
+    }
 
-    // 🔥 INI YANG BENAR
-    const records = response?.data?.data || [];
-
-  const clean = allRecords.map(item => ({
-  waybillNo: item.waybillNo,
-  pickNetwork: item.pickNetworkName,
-  destination: item.destinationName,
-  settlement: item.settlementName,
-  totalFreight: item.totalFreight,
-  freight: item.freight,
-  weight: item.waybillWeight,
-  staff: item.collectStaffName,
-  sender: item.senderName,
-  service: item.expressTypeName,
-  receiver: item.receiverName,
-  address: item.receiverDetailedAddress
-}));
+    // ================= CLEAN DATA (DI LUAR LOOP) =================
+    const clean = allRecords.map(item => ({
+      waybillNo: item.waybillNo,
+      pickNetwork: item.pickNetworkName,
+      destination: item.destinationName,
+      settlement: item.settlementName,
+      totalFreight: item.totalFreight,
+      freight: item.freight,
+      weight: item.waybillWeight,
+      staff: item.collectStaffName,
+      sender: item.senderName,
+      service: item.expressTypeName,
+      receiver: item.receiverName,
+      address: item.receiverDetailedAddress || "-"
+    }));
 
     res.json({
       total: clean.length,
@@ -205,7 +224,6 @@ app.get("/jfs-pickup", async (req, res) => {
     });
   }
 });
-    
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
