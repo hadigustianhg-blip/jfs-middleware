@@ -142,7 +142,7 @@ app.get("/jfs-pickup", async (req, res) => {
     const form = new FormData();
 
     form.append("current", 1);
-    form.append("size", 20);
+    form.append("size", 100);
     form.append("pickFinanceCode", "BDO000");
     form.append("isVoid", "0");
     form.append("timeStart", `${date} 00:00:00`);
