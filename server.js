@@ -68,7 +68,7 @@ app.get("/jfs-data", async (req, res) => {
       const [tanggal, jam] = datetime.split(" ");
 
       return {
-        resi: item.package_number || "-",
+        resi: item.billcode || "-",
         tanggal: tanggal || "-",
         jam: jam || "-",
         kurir: item.send_deliver_user || "-",
