@@ -2,21 +2,20 @@ const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 
-// ✅ HARUS ADA
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// 🔐 token
+// 🔐 token dari ENV / manual update
 let AUTH_TOKEN = process.env.AUTH_TOKEN || "";
 
-// ROOT
+// ================= ROOT =================
 app.get("/", (req, res) => {
   res.send("API JFS Middleware aktif 🚀");
 });
 
-// UPDATE TOKEN
+// ================= UPDATE TOKEN =================
 app.get("/set-token", (req, res) => {
   if (!req.query.token) {
     return res.status(400).json({ error: "Token wajib diisi" });
@@ -30,9 +29,15 @@ app.get("/set-token", (req, res) => {
   });
 });
 
-// API DATA
+// ================= API DATA =================
 app.get("/jfs-data", async (req, res) => {
   try {
+    if (!AUTH_TOKEN) {
+      return res.status(400).json({
+        error: "Token kosong, set dulu via /set-token"
+      });
+    }
+
     const date = req.query.date || new Date().toISOString().slice(0, 10);
     const site = req.query.site || "SUM001A";
 
@@ -63,20 +68,37 @@ app.get("/jfs-data", async (req, res) => {
 
     const records = response?.data?.data?.records || [];
 
+    // ================= CLEAN DATA =================
     const clean = records.map(item => {
       const datetime = item.scantime || "";
       const [tanggal, jam] = datetime.split(" ");
 
+      // 🔥 LOGIKA STATUS
+      let status = "PENDING";
+
+      if (item.signsite) {
+        status = "TERKIRIM";
+      } else if (item.nextstation) {
+        status = "ON DELIVERY";
+      }
+
       return {
-        resi: item.billcode || "-",
+        resi: item.billcode || "-", // ✅ RESI FIX
         tanggal: tanggal || "-",
         jam: jam || "-",
+
         kurir: item.send_deliver_user || "-",
+
         tujuan: (item.receiver_detailed_address || "")
           .split(",")[0]
           .slice(0, 50),
+
         berat_kg: Number(item.settlement_weight) || 0,
-        cod: item.cod_need === "Yes"
+
+        cod: item.cod_need === "Yes",
+
+        status: status,              // 🔥 STATUS BARU
+        signsite: item.signsite || "-" // 🔥 OPTIONAL TRACKING
       };
     });
 
@@ -93,7 +115,7 @@ app.get("/jfs-data", async (req, res) => {
   }
 });
 
-// PORT
+// ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, "0.0.0.0", () => {
