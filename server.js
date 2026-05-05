@@ -82,11 +82,15 @@ app.get("/jfs-pickup", async (req, res) => {
 
       form.append("current", current);
       form.append("size", 100);
+
+      // 🔥 FILTER (boleh dihapus kalau masih kosong)
       form.append("pickFinanceCode", "BDO000");
-      form.append("isVoid", "0");
-      form.append("timeStart", `${date} 00:00:00`);
-      form.append("timeEnd", `${date} 23:59:59`);
       form.append("pickNetworkCode", "SUM001A");
+      form.append("isVoid", "0");
+
+      // 🔥 FIX PARAMETER
+      form.append("startTime", `${date} 00:00:00`);
+      form.append("endTime", `${date} 23:59:59`);
 
       const response = await axios.post(
         "https://jfsgw.jtcargo.co.id/networkmanagement/shippingWaybillList",
@@ -94,7 +98,7 @@ app.get("/jfs-pickup", async (req, res) => {
         {
           headers: {
             ...form.getHeaders(),
-            ...getHeaders("sendWaybillSite")
+            ...getHeaders("shippingWaybill") // 🔥 FIX ROUTENAME
           }
         }
       );
@@ -105,7 +109,7 @@ app.get("/jfs-pickup", async (req, res) => {
 
       allRecords = allRecords.concat(records);
 
-      if (!records || records.length < 100) {
+      if (records.length < 100) {
         hasMore = false;
       } else {
         current++;
@@ -114,11 +118,14 @@ app.get("/jfs-pickup", async (req, res) => {
 
     const clean = allRecords.map(item => ({
       waybillNo: item.waybillNo,
+      pickupTime: item.deliveryTime,
+      origin: item.originName,
       destination: item.destinationName,
-      weight: item.waybillWeight,
-      staff: item.collectStaffName,
-      sender: item.senderName,
-      receiver: item.receiverName
+      totalFreight: item.totalFreight,
+      freight: item.freight,
+      weight: item.loadWeight,
+      settlement: item.settlementName,
+      status: item.waybillStatusName
     }));
 
     res.json({ total: clean.length, data: clean });
