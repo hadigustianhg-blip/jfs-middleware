@@ -193,10 +193,9 @@ app.get("/jfs-pickup", async (req, res) => {
         hasMore = false;
       } else {
         current++;
-      }
-} //
-
-}); // 
+    });
+  }
+});
     
 // ================= DISPATCH WAYBILL =================
 app.get("/jfs-dispatch", async (req, res) => {
