@@ -182,9 +182,7 @@ app.get("/jfs-pickup", async (req, res) => {
 app.get("/jfs-dispatch", async (req, res) => {
   try {
     if (!AUTH_TOKEN) {
-      return res.status(400).json({
-        error: "Token kosong"
-      });
+      return res.status(400).json({ error: "Token kosong" });
     }
 
     const date =
@@ -203,11 +201,16 @@ app.get("/jfs-dispatch", async (req, res) => {
         {
           current: current,
           size: 100,
+
+          oneNetwork: "BDO000",
+          dispatchFinanceId: 183,
+
           searchTimeType: 1,
           startTime: `${date} 00:00:00`,
           endTime: `${date} 23:59:59`,
-          dispatchFinanceCode: "BDO000",
+
           isFeeCostZero: 0,
+          dispatchFinanceCode: "BDO000",
           countryId: "1"
         },
         {
@@ -221,12 +224,12 @@ app.get("/jfs-dispatch", async (req, res) => {
         }
       );
 
-      // 🔥 INI KUNCI NYA
-      const records = response?.data?.data?.records || [];
+      // 🔥 FIX DI SINI
+      const records = response?.data?.data || [];
+
+      console.log("PAGE:", current, "DATA:", records.length);
 
       allRecords = allRecords.concat(records);
-
-      console.log(`Page ${current} → ${records.length}`);
 
       if (records.length < 100) {
         hasMore = false;
@@ -235,7 +238,6 @@ app.get("/jfs-dispatch", async (req, res) => {
       }
     }
 
-    // ================= CLEAN DATA =================
     const clean = allRecords.map(item => ({
       waybillNo: item.waybillNo,
       kurir: item.contractingAreaName,
