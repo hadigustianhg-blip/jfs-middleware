@@ -194,7 +194,9 @@ app.get("/jfs-pickup", async (req, res) => {
       } else {
         current++;
       }
-    }
+} //
+
+}); // 
     
 // ================= DISPATCH WAYBILL =================
 app.get("/jfs-dispatch", async (req, res) => {
