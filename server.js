@@ -88,7 +88,7 @@ app.get("/jfs-pickup", async (req, res) => {
       form.append("pickNetworkCode", "SUM001A");
 
       const response = await axios.post(
-        "https://jfsgw.jtcargo.co.id/networkmanagement/omsWaybill/shippingWaybillList",
+        "https://jfsgw.jtcargo.co.id/networkmanagement/shippingWaybillList",
         form,
         {
           headers: {
