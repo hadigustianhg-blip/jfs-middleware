@@ -128,7 +128,7 @@ app.get("/jfs-data", async (req, res) => {
     });
   }
 });
-// // ================= API PICKUP =================
+
 // ================= API PICKUP =================
 app.get("/jfs-pickup", async (req, res) => {
   try {
@@ -195,6 +195,7 @@ app.get("/jfs-pickup", async (req, res) => {
         current++;
       }
     }
+    
 // ================= DISPATCH WAYBILL =================
 app.get("/jfs-dispatch", async (req, res) => {
   try {
@@ -295,6 +296,7 @@ app.get("/jfs-dispatch", async (req, res) => {
     });
   }
 });
+
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
