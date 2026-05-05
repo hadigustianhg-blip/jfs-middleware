@@ -34,13 +34,14 @@ app.get("/set-token", (req, res) => {
 function getHeaders(route) {
   return {
     authtoken: AUTH_TOKEN,
-    "Content-Type": "application/json;charset=UTF-8",
+    "Content-Type": "application/x-www-form-urlencoded", // 🔥 FIX
     lang: "ID",
     langtype: "ID",
     routename: route,
 
     origin: "https://jfs.jtcargo.co.id",
     referer: "https://jfs.jtcargo.co.id/",
+
     "user-agent":
       "Mozilla/5.0 (Linux; Android 6.0; Nexus 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36"
   };
