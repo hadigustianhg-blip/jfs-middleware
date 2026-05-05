@@ -148,14 +148,16 @@ app.get("/jfs-dispatch", async (req, res) => {
     let current = 1;
     let hasMore = true;
 
-    while (hasMore) {
+    const maxPage = 10; // 🔥 batas aman (hindari infinite loop)
+
+    while (hasMore && current <= maxPage) {
       const response = await axios.post(
         "https://jfsgw.jtcargo.co.id/networkmanagement/dispatchWaybill/list",
         {
           current,
           size: 100,
 
-          // ✅ WAJIB SESUAI JFS
+          // ✅ SESUAI JFS (JANGAN DIUBAH)
           oneNetwork: "BDO000",
 
           dispatchFinanceCode: "BDO000",
@@ -175,8 +177,8 @@ app.get("/jfs-dispatch", async (req, res) => {
 
       const resData = response?.data;
 
-      if (!resData || {
-        throw new Error("Response tidak valid dari JFS");
+      if (!resData) {
+        throw new Error("Response kosong dari JFS");
       }
 
       const records = Array.isArray(resData.data) ? resData.data : [];
@@ -185,12 +187,15 @@ app.get("/jfs-dispatch", async (req, res) => {
 
       allRecords = allRecords.concat(records);
 
-      // ✅ FIX pagination (PENTING)
+      // 🔥 anti infinite loop
       if (records.length === 0) {
         hasMore = false;
       } else {
         current++;
       }
+
+      // 🔥 biar tidak di-limit JFS
+      await new Promise(r => setTimeout(r, 300));
     }
 
     const clean = allRecords.map(item => ({
@@ -209,9 +214,14 @@ app.get("/jfs-dispatch", async (req, res) => {
       barang: item.goodsName
     }));
 
-    res.json({ total: clean.length, data: clean });
+    res.json({
+      total: clean.length,
+      page: current - 1,
+      data: clean
+    });
 
   } catch (error) {
+    console.error("ERROR DISPATCH:", error.message);
     handleError(error, res, "Gagal ambil data dispatch");
   }
 });
