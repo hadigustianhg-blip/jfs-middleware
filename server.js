@@ -175,7 +175,7 @@ app.get("/jfs-dispatch", async (req, res) => {
 
       const resData = response?.data;
 
-      if (!resData || resData.code !== 1) {
+      if (!resData || {
         throw new Error("Response tidak valid dari JFS");
       }
 
