@@ -151,21 +151,23 @@ app.get("/jfs-dispatch", async (req, res) => {
 
     while (hasMore) {
       const response = await axios.post(
-        "https://jfsgw.jtcargo.co.id/networkmanagement/dispatchWaybill/list",
-        {
-          current,
-          size: 100,
-          oneNetwork: "BDO000",
-          dispatchFinanceId: 183,
-          searchTimeType: 1,
-          startTime: `${date} 00:00:00`,
-          endTime: `${date} 23:59:59`,
-          isFeeCostZero: 0,
-          dispatchFinanceCode: "BDO000",
-          countryId: "1"
-        },
-        { headers: getHeaders("dispatchWaybill") }
-      );
+  "https://jfsgw.jtcargo.co.id/networkmanagement/dispatchWaybill/list",
+  {
+    current,
+    size: 100,
+
+    oneNetwork: "SUM001A", // 🔥 FIX
+    dispatchFinanceCode: "BDO000",
+
+    dispatchFinanceId: 183,
+    searchTimeType: 1,
+    startTime: `${date} 00:00:00`,
+    endTime: `${date} 23:59:59`,
+    isFeeCostZero: 0,
+    countryId: "1"
+  },
+  { headers: getHeaders("dispatchWaybill") }
+);
 
       const records = response?.data?.data || [];
 
