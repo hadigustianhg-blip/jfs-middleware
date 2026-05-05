@@ -198,41 +198,62 @@ app.get("/jfs-pickup", async (req, res) => {
 });
     
 // ================= DISPATCH WAYBILL =================
-app.get("/jfs-dispatch", async (req, res) => {
+app.get("/jfs-pickup", async (req, res) => {
   try {
-    if (!AUTH_TOKEN) {
-      return res.status(400).json({
-        error: "Token kosong"
-      });
-    }
-
     const date = req.query.date || new Date().toISOString().slice(0, 10);
 
-    const response = await axios.post(
-      "https://jfsgw.jtcargo.co.id/networkmanagement/dispatchWaybill/list",
-      {
-        current: 1,
-        size: 100, // 🔥 ambil maksimal 100 data
-        oneNetwork: "BDO000",
-        searchTimeType: 1,
-        startTime: `${date} 00:00:00`,
-        endTime: `${date} 23:59:59`,
-        isFeeCostZero: 0,
-        dispatchFinanceCode: "BDO000",
-        dispatchFinanceId: 183,
-        countryId: "1"
-      },
-      {
-        headers: {
-          authtoken: AUTH_TOKEN,
-          lang: "ID",
-          langtype: "ID",
-          routename: "dispatchWaybill",
-          "Content-Type": "application/json"
-        },
-        timeout: 30000
+    let allRecords = [];
+    let current = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const form = new FormData();
+
+      form.append("current", current);
+      form.append("size", 100);
+      form.append("pickFinanceCode", "BDO000");
+      form.append("isVoid", "0");
+      form.append("timeStart", `${date} 00:00:00`);
+      form.append("timeEnd", `${date} 23:59:59`);
+      form.append("pickNetworkCode", "SUM001A");
+
+      const response = await axios.post(
+        "https://jfsgw.jtcargo.co.id/networkmanagement/omsWaybill/shippingWaybillList",
+        form,
+        {
+          headers: {
+            ...form.getHeaders(),
+            authtoken: AUTH_TOKEN,
+            lang: "ID",
+            langtype: "ID",
+            routename: "sendWaybillSite"
+          }
+        }
+      );
+
+      const records = response?.data?.data || [];
+
+      allRecords = allRecords.concat(records);
+
+      if (records.length < 100) {
+        hasMore = false;
+      } else {
+        current++;
       }
-    );
+    }
+
+    res.json({
+      total: allRecords.length,
+      data: allRecords
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      error: "Gagal ambil data pickup",
+      detail: error.response?.data || error.message
+    });
+  }
+});
 
     // ================= AMBIL DATA =================
     const records = response?.data?.data?.records || [];
