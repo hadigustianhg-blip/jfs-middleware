@@ -155,8 +155,8 @@ app.get("/jfs-dispatch", async (req, res) => {
           current,
           size: 100,
 
-          // 🔥 INI KUNCI NYA
-          oneNetwork: "SUM001A",
+          // ✅ WAJIB SESUAI JFS
+          oneNetwork: "BDO000",
 
           dispatchFinanceCode: "BDO000",
           dispatchFinanceId: 183,
@@ -173,13 +173,20 @@ app.get("/jfs-dispatch", async (req, res) => {
         }
       );
 
-      const records = response?.data?.data || [];
+      const resData = response?.data;
+
+      if (!resData || resData.code !== 1) {
+        throw new Error("Response tidak valid dari JFS");
+      }
+
+      const records = Array.isArray(resData.data) ? resData.data : [];
 
       console.log("DISPATCH PAGE:", current, records.length);
 
       allRecords = allRecords.concat(records);
 
-      if (!records || records.length < 100) {
+      // ✅ FIX pagination (PENTING)
+      if (records.length === 0) {
         hasMore = false;
       } else {
         current++;
