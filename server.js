@@ -13,7 +13,7 @@ let AUTH_TOKEN = process.env.AUTH_TOKEN || "";
 
 // ================= ROOT =================
 app.get("/", (req, res) => {
-  res.send("API JFS Middleware aktif 🚀");
+  res.send("API JFS Middleware (Pickup + Dispatch) 🚀");
 });
 
 // ================= SET TOKEN =================
@@ -39,7 +39,6 @@ function getHeaders(route) {
     langtype: "ID",
     routename: route,
 
-    // 🔥 WAJIB (biar lolos JFS)
     origin: "https://jfs.jtcargo.co.id",
     referer: "https://jfs.jtcargo.co.id/",
     "user-agent":
@@ -64,74 +63,7 @@ function handleError(error, res, label) {
   });
 }
 
-// ================= API DATA =================
-app.get("/jfs-data", async (req, res) => {
-  try {
-    if (!AUTH_TOKEN) {
-      return res.status(400).json({ error: "Token kosong" });
-    }
-
-    const date = req.query.date || new Date().toISOString().slice(0, 10);
-    const site = req.query.site || "SUM001A";
-
-    let allRecords = [];
-    let current = 1;
-    let hasMore = true;
-
-    while (hasMore) {
-      const response = await axios.post(
-        "https://jfsgw.jtcargo.co.id/jfs-report-leader/report/dynamicReport/findByPagination",
-        {
-          scanSiteCode: site,
-          beginDate: `${date} 00:00:00`,
-          endDate: `${date} 23:59:59`,
-          wayType: "1",
-          sqlCode: "realtime_sca_del_mon_dtl",
-          current,
-          size: 100,
-          paginationSearchType: "list",
-          countryId: "1"
-        },
-        { headers: getHeaders("report") }
-      );
-
-      const records = response?.data?.data?.records || [];
-
-      console.log("DATA PAGE:", current, records.length);
-
-      allRecords = allRecords.concat(records);
-
-      if (!records || records.length < 100) {
-        hasMore = false;
-      } else {
-        current++;
-      }
-    }
-
-    const clean = allRecords.map(item => {
-      const [tanggal, jam] = (item.scantime || "").split(" ");
-
-      return {
-        resi: item.billcode,
-        tanggal,
-        jam,
-        kurir: item.send_deliver_user,
-        tujuan: item.receiver_detailed_address,
-        berat_kg: item.settlement_weight,
-        cod: item.cod_need === "Yes",
-        status: item.signsite ? "TERKIRIM" : "PENDING",
-        signsite: item.signsite
-      };
-    });
-
-    res.json({ total: clean.length, data: clean });
-
-  } catch (error) {
-    handleError(error, res, "Gagal ambil data");
-  }
-});
-
-// ================= API PICKUP =================
+// ================= PICKUP =================
 app.get("/jfs-pickup", async (req, res) => {
   try {
     if (!AUTH_TOKEN) {
