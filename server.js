@@ -195,7 +195,78 @@ app.get("/jfs-pickup", async (req, res) => {
         current++;
       }
     }
+// ================= DISPATCH WAYBILL =================
+app.get("/jfs-dispatch", async (req, res) => {
+  try {
+    if (!AUTH_TOKEN) {
+      return res.status(400).json({
+        error: "Token kosong"
+      });
+    }
 
+    const date = req.query.date || new Date().toISOString().slice(0, 10);
+
+    const response = await axios.post(
+      "https://jfsgw.jtcargo.co.id/networkmanagement/dispatchWaybill/list",
+      {
+        current: 1,
+        size: 100, // 🔥 ambil maksimal 100 data
+        oneNetwork: "BDO000",
+        searchTimeType: 1,
+        startTime: `${date} 00:00:00`,
+        endTime: `${date} 23:59:59`,
+        isFeeCostZero: 0,
+        dispatchFinanceCode: "BDO000",
+        dispatchFinanceId: 183,
+        countryId: "1"
+      },
+      {
+        headers: {
+          authtoken: AUTH_TOKEN,
+          lang: "ID",
+          langtype: "ID",
+          routename: "dispatchWaybill",
+          "Content-Type": "application/json"
+        },
+        timeout: 30000
+      }
+    );
+
+    // ================= AMBIL DATA =================
+    const records = response?.data?.data?.records || [];
+
+    // ================= CLEAN DATA =================
+    const clean = records.map(item => ({
+      waybillNo: item.waybillNo || "",
+      contractingArea: item.contractingAreaName || "",
+      receivePayFee: item.receivePayFee || 0,
+      dispatchTime: item.dispatchTime || "",
+      receiver: item.receiverName || "",
+      address: item.receiverDetailedAddress || "",
+      status: item.isSignName || "",
+      weight: item.chargeWeight || 0,
+      settlement: item.settlementName || "",
+      service: item.expressTypeName || "",
+      cod: item.codNeedName || "",
+      codValue: item.codMoney || 0,
+      goods: item.goodsName || ""
+    }));
+
+    // ================= RESPONSE =================
+    res.json({
+      total: clean.length,
+      data: clean
+    });
+
+  } catch (error) {
+    console.error("ERROR DISPATCH:", error.response?.data || error.message);
+
+    res.status(500).json({
+      error: "Gagal ambil data dispatch",
+      detail: error.response?.data || error.message
+    });
+  }
+});
     // ================= CLEAN DATA (DI LUAR LOOP) =================
     const clean = allRecords.map(item => ({
       waybillNo: item.waybillNo,
