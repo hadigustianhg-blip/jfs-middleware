@@ -30,14 +30,45 @@ app.get("/set-token", (req, res) => {
   });
 });
 
+// ================= COMMON HEADER =================
+function getHeaders(route) {
+  return {
+    authtoken: AUTH_TOKEN,
+    "Content-Type": "application/json;charset=UTF-8",
+    lang: "ID",
+    langtype: "ID",
+    routename: route,
+
+    // 🔥 WAJIB (biar lolos JFS)
+    origin: "https://jfs.jtcargo.co.id",
+    referer: "https://jfs.jtcargo.co.id/",
+    "user-agent":
+      "Mozilla/5.0 (Linux; Android 6.0; Nexus 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36"
+  };
+}
+
+// ================= ERROR HANDLER =================
+function handleError(error, res, label) {
+  console.error(label, error.response?.data || error.message);
+
+  if (error.response?.data?.code === 401) {
+    return res.status(401).json({
+      error: "TOKEN EXPIRED",
+      detail: "Silakan update token JFS"
+    });
+  }
+
+  res.status(500).json({
+    error: label,
+    detail: error.response?.data || error.message
+  });
+}
 
 // ================= API DATA =================
 app.get("/jfs-data", async (req, res) => {
   try {
     if (!AUTH_TOKEN) {
-      return res.status(400).json({
-        error: "Token kosong"
-      });
+      return res.status(400).json({ error: "Token kosong" });
     }
 
     const date = req.query.date || new Date().toISOString().slice(0, 10);
@@ -61,21 +92,16 @@ app.get("/jfs-data", async (req, res) => {
           paginationSearchType: "list",
           countryId: "1"
         },
-        {
-          headers: {
-            authtoken: AUTH_TOKEN,
-            lang: "ID",
-            langtype: "ID",
-            routename: "report"
-          }
-        }
+        { headers: getHeaders("report") }
       );
 
       const records = response?.data?.data?.records || [];
 
+      console.log("DATA PAGE:", current, records.length);
+
       allRecords = allRecords.concat(records);
 
-      if (records.length < 100) {
+      if (!records || records.length < 100) {
         hasMore = false;
       } else {
         current++;
@@ -101,13 +127,9 @@ app.get("/jfs-data", async (req, res) => {
     res.json({ total: clean.length, data: clean });
 
   } catch (error) {
-    res.status(500).json({
-      error: "Gagal ambil data",
-      detail: error.response?.data || error.message
-    });
+    handleError(error, res, "Gagal ambil data");
   }
 });
-
 
 // ================= API PICKUP =================
 app.get("/jfs-pickup", async (req, res) => {
@@ -139,19 +161,18 @@ app.get("/jfs-pickup", async (req, res) => {
         {
           headers: {
             ...form.getHeaders(),
-            authtoken: AUTH_TOKEN,
-            lang: "ID",
-            langtype: "ID",
-            routename: "sendWaybillSite"
+            ...getHeaders("sendWaybillSite")
           }
         }
       );
 
       const records = response?.data?.data || [];
 
+      console.log("PICKUP PAGE:", current, records.length);
+
       allRecords = allRecords.concat(records);
 
-      if (records.length < 100) {
+      if (!records || records.length < 100) {
         hasMore = false;
       } else {
         current++;
@@ -170,26 +191,18 @@ app.get("/jfs-pickup", async (req, res) => {
     res.json({ total: clean.length, data: clean });
 
   } catch (error) {
-    res.status(500).json({
-      error: "Gagal ambil data pickup",
-      detail: error.response?.data || error.message
-    });
+    handleError(error, res, "Gagal ambil data pickup");
   }
 });
 
-
-// ================= DISPATCH WAYBILL =================
+// ================= DISPATCH =================
 app.get("/jfs-dispatch", async (req, res) => {
   try {
     if (!AUTH_TOKEN) {
       return res.status(400).json({ error: "Token kosong" });
     }
 
-    const date =
-      req.query.date ||
-      new Date().toLocaleDateString("en-CA", {
-        timeZone: "Asia/Jakarta"
-      });
+    const date = req.query.date || new Date().toISOString().slice(0, 10);
 
     let allRecords = [];
     let current = 1;
@@ -199,39 +212,27 @@ app.get("/jfs-dispatch", async (req, res) => {
       const response = await axios.post(
         "https://jfsgw.jtcargo.co.id/networkmanagement/dispatchWaybill/list",
         {
-          current: current,
+          current,
           size: 100,
-
           oneNetwork: "BDO000",
           dispatchFinanceId: 183,
-
           searchTimeType: 1,
           startTime: `${date} 00:00:00`,
           endTime: `${date} 23:59:59`,
-
           isFeeCostZero: 0,
           dispatchFinanceCode: "BDO000",
           countryId: "1"
         },
-        {
-          headers: {
-            authtoken: AUTH_TOKEN,
-            "Content-Type": "application/json;charset=UTF-8",
-            lang: "ID",
-            langtype: "ID",
-            routename: "dispatchWaybill"
-          }
-        }
+        { headers: getHeaders("dispatchWaybill") }
       );
 
-      // 🔥 FIX DI SINI
       const records = response?.data?.data || [];
 
-      console.log("PAGE:", current, "DATA:", records.length);
+      console.log("DISPATCH PAGE:", current, records.length);
 
       allRecords = allRecords.concat(records);
 
-      if (records.length < 100) {
+      if (!records || records.length < 100) {
         hasMore = false;
       } else {
         current++;
@@ -249,21 +250,15 @@ app.get("/jfs-dispatch", async (req, res) => {
       berat: item.chargeWeight,
       pembayaran: item.settlementName,
       service: item.expressTypeName,
-      codStatus: item.codNeedName,
+      cod: item.codNeedName,
       codValue: item.codMoney,
       barang: item.goodsName
     }));
 
-    res.json({
-      total: clean.length,
-      data: clean
-    });
+    res.json({ total: clean.length, data: clean });
 
   } catch (error) {
-    res.status(500).json({
-      error: "Gagal ambil data dispatch",
-      detail: error.response?.data || error.message
-    });
+    handleError(error, res, "Gagal ambil data dispatch");
   }
 });
 
