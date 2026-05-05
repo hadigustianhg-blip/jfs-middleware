@@ -88,19 +88,18 @@ app.get("/jfs-pickup", async (req, res) => {
       form.append("timeStart", `${date} 00:00:00`);
       form.append("timeEnd", `${date} 23:59:59`);
 
-      // 🔥 WAJIB ADA
       form.append("inputTimeStart", `${date} 00:00:00`);
       form.append("inputTimeEnd", `${date} 23:59:59`);
 
       form.append("pickNetworkCode", "SUM001A");
 
       const response = await axios.post(
-        "https://jfsgw.jtcargo.co.id/networkmanagement/shippingWaybillList",
+        "https://jfsgw.jtcargo.co.id/networkmanagement/omsWaybill/shippingWaybillList", // 🔥 FIX
         form,
         {
           headers: {
             ...form.getHeaders(),
-            ...getHeaders("shippingWaybillList") // 🔥 FIX
+            ...getHeaders("sendWaybillSite") // 🔥 FIX
           }
         }
       );
