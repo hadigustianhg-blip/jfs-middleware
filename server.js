@@ -178,40 +178,65 @@ app.get("/jfs-pickup", async (req, res) => {
 });
 
 
-// ================= DISPATCH =================
+// ================= DISPATCH WAYBILL =================
 app.get("/jfs-dispatch", async (req, res) => {
   try {
     if (!AUTH_TOKEN) {
-      return res.status(400).json({ error: "Token kosong" });
+      return res.status(400).json({
+        error: "Token kosong"
+      });
     }
 
-    const date = req.query.date || new Date().toISOString().slice(0, 10);
+    const date =
+      req.query.date ||
+      new Date().toLocaleDateString("en-CA", {
+        timeZone: "Asia/Jakarta"
+      });
 
-    const response = await axios.post(
-      "https://jfsgw.jtcargo.co.id/networkmanagement/dispatchWaybill/list",
-      {
-        current: 1,
-        size: 100,
-        oneNetwork: "BDO000",
-        searchTimeType: 1,
-        startTime: `${date} 00:00:00`,
-        endTime: `${date} 23:59:59`,
-        dispatchFinanceCode: "BDO000",
-        countryId: "1"
-      },
-      {
-        headers: {
-          authtoken: AUTH_TOKEN,
-          lang: "ID",
-          langtype: "ID",
-          routename: "dispatchWaybill"
+    let allRecords = [];
+    let current = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const response = await axios.post(
+        "https://jfsgw.jtcargo.co.id/networkmanagement/dispatchWaybill/list",
+        {
+          current: current,
+          size: 100,
+          searchTimeType: 1,
+          startTime: `${date} 00:00:00`,
+          endTime: `${date} 23:59:59`,
+          dispatchFinanceCode: "BDO000",
+          isFeeCostZero: 0,
+          countryId: "1"
+        },
+        {
+          headers: {
+            authtoken: AUTH_TOKEN,
+            "Content-Type": "application/json;charset=UTF-8",
+            lang: "ID",
+            langtype: "ID",
+            routename: "dispatchWaybill"
+          }
         }
+      );
+
+      // 🔥 INI KUNCI NYA
+      const records = response?.data?.data?.records || [];
+
+      allRecords = allRecords.concat(records);
+
+      console.log(`Page ${current} → ${records.length}`);
+
+      if (records.length < 100) {
+        hasMore = false;
+      } else {
+        current++;
       }
-    );
+    }
 
-    const records = response?.data?.data?.records || [];
-
-    const clean = records.map(item => ({
+    // ================= CLEAN DATA =================
+    const clean = allRecords.map(item => ({
       waybillNo: item.waybillNo,
       kurir: item.contractingAreaName,
       ongkir: item.receivePayFee,
@@ -219,15 +244,18 @@ app.get("/jfs-dispatch", async (req, res) => {
       receiver: item.receiverName,
       address: item.receiverDetailedAddress,
       status: item.isSignName,
-      weight: item.chargeWeight,
-      settlement: item.settlementName,
+      berat: item.chargeWeight,
+      pembayaran: item.settlementName,
       service: item.expressTypeName,
-      cod: item.codNeedName,
+      codStatus: item.codNeedName,
       codValue: item.codMoney,
-      goods: item.goodsName
+      barang: item.goodsName
     }));
 
-    res.json({ total: clean.length, data: clean });
+    res.json({
+      total: clean.length,
+      data: clean
+    });
 
   } catch (error) {
     res.status(500).json({
@@ -236,7 +264,6 @@ app.get("/jfs-dispatch", async (req, res) => {
     });
   }
 });
-
 
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
