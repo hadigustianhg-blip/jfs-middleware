@@ -2,6 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 const FormData = require("form-data");
+const moment = require("moment-timezone");
 
 const app = express();
 
@@ -198,7 +199,7 @@ app.get("/jfs-dispatch", async (req, res) => {
           dispatchFinanceCode: "BDO000",
 
           // 1 = berdasarkan waktu dispatch
-          searchTimeType: 1,
+          searchTimeType: 2,
 
           startTime: `${date} 00:00:00`,
           endTime: `${date} 23:59:59`,
