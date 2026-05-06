@@ -304,6 +304,173 @@ app.get("/jfs-dispatch", async (req, res) => {
     });
   }
 });
+// ================= JFS COD =================
+app.get("/jfs-cod", async (req, res) => {
+  try {
+
+    // =========================
+    // CHECK TOKEN
+    // =========================
+    if (!AUTH_TOKEN) {
+      return res.status(400).json({
+        error: "Token kosong"
+      });
+    }
+
+    // =========================
+    // DATE WIB
+    // =========================
+    const date =
+      req.query.date ||
+      moment().tz("Asia/Jakarta").format("YYYY-MM-DD");
+
+    let allRecords = [];
+    let current = 1;
+    let hasMore = true;
+
+    const maxPage = 20;
+
+    while (hasMore && current <= maxPage) {
+
+      // =========================
+      // PAYLOAD
+      // =========================
+      const payload = {
+        current: current,
+        size: 100,
+
+        revenueNetworkCode: "SUM001A",
+
+        financeCenterId: "BDO000",
+
+        startTime: `${date} 00:00:00`,
+        endTime: `${date} 23:59:59`,
+
+        timeType: 1,
+
+        countryId: "1",
+
+        customerCode: "",
+        dispatchStaffCode: "",
+        repaymentStatus: "",
+        repaymentType: "",
+        salesmanRepaymentStatus: "",
+
+        orderSource: [],
+        repaymentSerialNoList: [],
+        waybillNoList: [],
+
+        isTimelyRepayment: ""
+      };
+
+      console.log("COD PAYLOAD:", payload);
+
+      // =========================
+      // REQUEST
+      // =========================
+      const response = await axios.post(
+        "https://jfsgw.jtcargo.co.id/codAccounting/api/collection-receipt-detail/page",
+        payload,
+        {
+          headers: {
+            "Accept": "application/json, text/plain, */*",
+            "Content-Type": "application/json;charset=UTF-8",
+
+            "Authtoken": AUTH_TOKEN,
+
+            "Lang": "ID",
+            "Langtype": "ID",
+
+            "Origin": "https://jfs.jtcargo.co.id",
+            "Referer": "https://jfs.jtcargo.co.id/",
+
+            "Routename": "collectionAccountBook",
+
+            "User-Agent":
+              "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36"
+          }
+        }
+      );
+
+      const resData = response?.data;
+
+      console.log(
+        "RAW COD:",
+        JSON.stringify(resData).slice(0, 1000)
+      );
+
+      // =========================
+      // RECORDS
+      // =========================
+      const records =
+        resData?.data?.records || [];
+
+      console.log(
+        "COD PAGE:",
+        current,
+        records.length
+      );
+
+      allRecords = allRecords.concat(records);
+
+      // =========================
+      // STOP PAGINATION
+      // =========================
+      if (!records.length || records.length < 100) {
+        hasMore = false;
+      } else {
+        current++;
+      }
+
+      // anti limit
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    // =========================
+    // FORMAT DATA
+    // =========================
+    const clean = allRecords.map(item => ({
+
+      waybillNo: item.waybillNo || "",
+
+      codAmount: item.codAmount || 0,
+
+      repaymentStatus: item.repaymentStatus || 0,
+
+      repaymentType: item.repaymentType || 0,
+
+      signTime: item.signTime || "",
+
+      dispatchStaffName:
+        item.dispatchStaffName || ""
+
+    }));
+
+    // =========================
+    // RESPONSE
+    // =========================
+    res.json({
+      success: true,
+      total: clean.length,
+      page: current - 1,
+      data: clean
+    });
+
+  } catch (error) {
+
+    console.error(
+      "ERROR COD:",
+      error.response?.data || error.message
+    );
+
+    res.status(500).json({
+      error: "Gagal ambil data COD",
+      detail:
+        error.response?.data ||
+        error.message
+    });
+  }
+});
 
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
