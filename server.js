@@ -122,20 +122,31 @@ app.get("/jfs-pickup", async (req, res) => {
     // FORMAT DATA UNTUK GSHEET
     // =========================
 
-    const clean = allRecords.map(item => ({
-      waybillNo: item.waybillNo || "",
-      pickNetwork: item.pickNetworkName || item.pickNetworkCode || "",
-      destination: item.destinationName || "",
-      settlement: item.settlementTypeName || "",
-      totalFreight: item.totalFreight || 0,
-      freight: item.freight || 0,
-      weight: item.loadWeight || 0,
-      staff: item.createUserName || item.staffName || "",
-      sender: item.senderName || "",
-      service: item.productName || item.serviceTypeName || "",
-      receiver: item.receiverName || "",
-      address: item.receiverAddress || ""
-    }));
+   const clean = allRecords.map(item => ({
+  waybillNo: item.waybillNo || "",
+
+  pickNetwork: item.pickNetworkName || "",
+
+  destination: item.destinationName || "",
+
+  settlement: item.settlementName || "",
+
+  totalFreight: item.totalFreight || 0,
+
+  freight: item.freight || 0,
+
+  weight: item.loadWeight || 0,
+
+  staff: item.collectStaffName || item.inputStaffName || "",
+
+  sender: item.senderName || "",
+
+  service: item.expressTypeName || "",
+
+  receiver: item.receiverName || "",
+
+  address: item.receiverDetailedAddress || ""
+}));
 
     res.json({
       total: clean.length,
