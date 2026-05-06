@@ -82,7 +82,10 @@ app.get("/jfs-pickup", async (req, res) => {
 
       form.append("current", current);
       form.append("size", 100);
+
       form.append("pickFinanceCode", "BDO000");
+      form.append("pickNetworkCode", "SUM001A");
+
       form.append("isVoid", "0");
 
       form.append("timeStart", `${date} 00:00:00`);
@@ -91,15 +94,13 @@ app.get("/jfs-pickup", async (req, res) => {
       form.append("inputTimeStart", `${date} 00:00:00`);
       form.append("inputTimeEnd", `${date} 23:59:59`);
 
-      form.append("pickNetworkCode", "SUM001A");
-
       const response = await axios.post(
-        "https://jfsgw.jtcargo.co.id/networkmanagement/omsWaybill/shippingWaybillList", // 🔥 FIX
+        "https://jfsgw.jtcargo.co.id/networkmanagement/omsWaybill/shippingWaybillList",
         form,
         {
           headers: {
             ...form.getHeaders(),
-            ...getHeaders("sendWaybillSite") // 🔥 FIX
+            ...getHeaders("sendWaybillSite")
           }
         }
       );
@@ -117,18 +118,29 @@ app.get("/jfs-pickup", async (req, res) => {
       }
     }
 
+    // =========================
+    // FORMAT DATA UNTUK GSHEET
+    // =========================
+
     const clean = allRecords.map(item => ({
-      waybillNo: item.waybillNo,
-      pickupTime: item.inputTime,
-      origin: item.originName,
-      destination: item.destinationName,
-      weight: item.loadWeight,
-      sender: item.senderName,
-      receiver: item.receiverName,
-      status: item.waybillStatusName
+      waybillNo: item.waybillNo || "",
+      pickNetwork: item.pickNetworkName || item.pickNetworkCode || "",
+      destination: item.destinationName || "",
+      settlement: item.settlementTypeName || "",
+      totalFreight: item.totalFreight || 0,
+      freight: item.freight || 0,
+      weight: item.loadWeight || 0,
+      staff: item.createUserName || item.staffName || "",
+      sender: item.senderName || "",
+      service: item.productName || item.serviceTypeName || "",
+      receiver: item.receiverName || "",
+      address: item.receiverAddress || ""
     }));
 
-    res.json({ total: clean.length, data: clean });
+    res.json({
+      total: clean.length,
+      data: clean
+    });
 
   } catch (error) {
     handleError(error, res, "Gagal ambil data pickup");
