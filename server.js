@@ -170,10 +170,10 @@ app.get("/jfs-dispatch", async (req, res) => {
     // =========================
     // DATE
     // =========================
-    const date =
-      req.query.date ||
-      new Date().toISOString().slice(0, 10);
-
+   const date =
+  req.query.date ||
+  moment().tz("Asia/Jakarta").format("YYYY-MM-DD");
+    
     let allRecords = [];
     let current = 1;
     let hasMore = true;
