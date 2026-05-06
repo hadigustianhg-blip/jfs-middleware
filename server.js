@@ -162,31 +162,44 @@ app.get("/jfs-pickup", async (req, res) => {
 app.get("/jfs-dispatch", async (req, res) => {
   try {
     if (!AUTH_TOKEN) {
-      return res.status(400).json({ error: "Token kosong" });
+      return res.status(400).json({
+        error: "Token kosong"
+      });
     }
 
-    const date = req.query.date || new Date().toISOString().slice(0, 10);
+    // =========================
+    // DATE
+    // =========================
+    const date =
+      req.query.date ||
+      new Date().toISOString().slice(0, 10);
 
     let allRecords = [];
     let current = 1;
     let hasMore = true;
 
-    const maxPage = 10; // 🔥 batas aman (hindari infinite loop)
+    const maxPage = 20;
 
     while (hasMore && current <= maxPage) {
+
+      // =========================
+      // REQUEST JFS
+      // =========================
       const response = await axios.post(
         "https://jfsgw.jtcargo.co.id/networkmanagement/dispatchWaybill/list",
         {
           current,
           size: 100,
 
-          // ✅ SESUAI JFS (JANGAN DIUBAH)
-          oneNetwork: "BDO000",
+          // NETWORK
+          oneNetwork: "SUM001A",
 
+          // FINANCE
           dispatchFinanceCode: "BDO000",
-          dispatchFinanceId: 183,
 
+          // 1 = berdasarkan waktu dispatch
           searchTimeType: 1,
+
           startTime: `${date} 00:00:00`,
           endTime: `${date} 23:59:59`,
 
@@ -200,52 +213,98 @@ app.get("/jfs-dispatch", async (req, res) => {
 
       const resData = response?.data;
 
-      if (!resData) {
-        throw new Error("Response kosong dari JFS");
-      }
+      // =========================
+      // DEBUG
+      // =========================
+      console.log(
+        "RAW RESPONSE:",
+        JSON.stringify(resData).slice(0, 500)
+      );
 
-      const records = Array.isArray(resData.data) ? resData.data : [];
+      // =========================
+      // AMBIL DATA
+      // =========================
+      const records =
+        resData?.data ||
+        [];
 
-      console.log("DISPATCH PAGE:", current, records.length);
+      console.log(
+        "DISPATCH PAGE:",
+        current,
+        records.length
+      );
 
+      // =========================
+      // GABUNG DATA
+      // =========================
       allRecords = allRecords.concat(records);
 
-      // 🔥 anti infinite loop
-      if (records.length === 0) {
+      // =========================
+      // STOP PAGINATION
+      // =========================
+      if (!records.length || records.length < 100) {
         hasMore = false;
       } else {
         current++;
       }
 
-      // 🔥 biar tidak di-limit JFS
+      // delay anti limit
       await new Promise(r => setTimeout(r, 300));
     }
 
+    // =========================
+    // FORMAT DATA
+    // =========================
     const clean = allRecords.map(item => ({
-      waybillNo: item.waybillNo,
-      kurir: item.contractingAreaName,
-      ongkir: item.receivePayFee,
-      waktu: item.dispatchTime,
-      receiver: item.receiverName,
-      address: item.receiverDetailedAddress,
-      status: item.isSignName,
-      berat: item.chargeWeight,
-      pembayaran: item.settlementName,
-      service: item.expressTypeName,
-      cod: item.codNeedName,
-      codValue: item.codMoney,
-      barang: item.goodsName
+      waybillNo: item.waybillNo || "",
+
+      kurir: item.contractingAreaName || "",
+
+      ongkir: item.receivePayFee || 0,
+
+      waktu: item.dispatchTime || "",
+
+      receiver: item.receiverName || "",
+
+      address: item.receiverDetailedAddress || "",
+
+      status: item.isSignName || "",
+
+      berat: item.chargeWeight || 0,
+
+      pembayaran: item.settlementName || "",
+
+      service: item.expressTypeName || "",
+
+      cod: item.codNeedName || "",
+
+      codValue: item.codMoney || 0,
+
+      barang: item.goodsName || ""
     }));
 
+    // =========================
+    // RESPONSE API
+    // =========================
     res.json({
+      success: true,
       total: clean.length,
       page: current - 1,
       data: clean
     });
 
   } catch (error) {
-    console.error("ERROR DISPATCH:", error.message);
-    handleError(error, res, "Gagal ambil data dispatch");
+
+    console.error(
+      "ERROR DISPATCH:",
+      error.response?.data || error.message
+    );
+
+    handleError(
+      error,
+      res,
+      "Gagal ambil data dispatch"
+    );
   }
 });
 
