@@ -162,6 +162,10 @@ app.get("/jfs-pickup", async (req, res) => {
 // ================= DISPATCH =================
 app.get("/jfs-dispatch", async (req, res) => {
   try {
+
+    // =========================
+    // CHECK TOKEN
+    // =========================
     if (!AUTH_TOKEN) {
       return res.status(400).json({
         error: "Token kosong"
@@ -169,12 +173,12 @@ app.get("/jfs-dispatch", async (req, res) => {
     }
 
     // =========================
-    // DATE
+    // DATE WIB
     // =========================
-   const date =
-  req.query.date ||
-  moment().tz("Asia/Jakarta").format("YYYY-MM-DD");
-    
+    const date =
+      req.query.date ||
+      moment().tz("Asia/Jakarta").format("YYYY-MM-DD");
+
     let allRecords = [];
     let current = 1;
     let hasMore = true;
@@ -192,14 +196,13 @@ app.get("/jfs-dispatch", async (req, res) => {
           current,
           size: 100,
 
-          // NETWORK
-          oneNetwork: "SUM001A",
+          // SESUAI PAYLOAD ASLI BROWSER
+          oneNetwork: "BDO000",
 
-          // FINANCE
           dispatchFinanceCode: "BDO000",
+          dispatchFinanceId: 183,
 
-          // 1 = berdasarkan waktu dispatch
-          searchTimeType: 2,
+          searchTimeType: 1,
 
           startTime: `${date} 00:00:00`,
           endTime: `${date} 23:59:59`,
@@ -208,7 +211,16 @@ app.get("/jfs-dispatch", async (req, res) => {
           countryId: "1"
         },
         {
-          headers: getHeaders("dispatchWaybill")
+          headers: {
+            "Content-Type": "application/json;charset=UTF-8",
+            "Authtoken": AUTH_TOKEN,
+            "Lang": "ID",
+            "Langtype": "ID",
+            "Origin": "https://jfs.jtcargo.co.id",
+            "Referer": "https://jfs.jtcargo.co.id/",
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+          }
         }
       );
 
@@ -219,15 +231,16 @@ app.get("/jfs-dispatch", async (req, res) => {
       // =========================
       console.log(
         "RAW RESPONSE:",
-        JSON.stringify(resData).slice(0, 500)
+        JSON.stringify(resData).slice(0, 1000)
       );
 
       // =========================
       // AMBIL DATA
       // =========================
       const records =
-        resData?.data ||
-        [];
+        Array.isArray(resData?.data)
+          ? resData.data
+          : [];
 
       console.log(
         "DISPATCH PAGE:",
@@ -249,7 +262,7 @@ app.get("/jfs-dispatch", async (req, res) => {
         current++;
       }
 
-      // delay anti limit
+      // anti limit
       await new Promise(r => setTimeout(r, 300));
     }
 
@@ -301,11 +314,12 @@ app.get("/jfs-dispatch", async (req, res) => {
       error.response?.data || error.message
     );
 
-    handleError(
-      error,
-      res,
-      "Gagal ambil data dispatch"
-    );
+    res.status(500).json({
+      error: "Gagal ambil data dispatch",
+      detail:
+        error.response?.data ||
+        error.message
+    });
   }
 });
 
