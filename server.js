@@ -31,7 +31,7 @@ async function startWhatsApp() {
 
   sock.ev.on("connection.update", async (update) => {
 
-    const { connection, qr } = update;
+  const { connection, qr } = update;
 
     if (qr) {
 
@@ -61,13 +61,13 @@ startWhatsApp();
 let AUTH_TOKEN = process.env.AUTH_TOKEN || "";
 
 // ================= ROOT =================
-app.get("/", (req, res) => {
-  res.send("WHATSAPP VERSION AKTIF V2🚀");
-});
-
 app.get("/test-wa", async (req, res) => {
 
   try {
+
+    if (!sock || !sock.user) {
+      return res.send("WhatsApp belum connect");
+    }
 
     await sock.sendMessage(
       "6282116534196@s.whatsapp.net",
@@ -83,7 +83,6 @@ app.get("/test-wa", async (req, res) => {
     console.log(err);
 
     res.send("Gagal kirim pesan");
-
   }
 
 });
