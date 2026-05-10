@@ -2,7 +2,8 @@ const express = require("express");
 const P = require("pino");
 const {
   default: makeWASocket,
-  useMultiFileAuthState
+  useMultiFileAuthState,
+  fetchLatestBaileysVersion
 } = require("@whiskeysockets/baileys");
 const axios = require("axios");
 const cors = require("cors");
@@ -21,14 +22,17 @@ app.use(express.json());
 async function startWhatsApp() {
 
   const { state, saveCreds } =
-await useMultiFileAuthState("auth");
-  
-sock = makeWASocket({
-auth: state,
-version,
-printQRInTerminal: true,
-logger: P({ level: "silent" })
-});
+  await useMultiFileAuthState("auth");
+
+  const { version } =
+  await fetchLatestBaileysVersion();
+
+  sock = makeWASocket({
+    auth: state,
+    version,
+    printQRInTerminal: true,
+    logger: P({ level: "silent" })
+  });
   
 sock.ev.on("connection.update", async (update) => {
 
@@ -570,6 +574,10 @@ app.get("/jfs-cod", async (req, res) => {
 });
 
 // ================= PORT =================
+
+app.get("/", (req, res) => {
+  res.send("WA BOT RUNNING");
+});
 
 const PORT = process.env.PORT || 3000;
 
