@@ -3,7 +3,7 @@ const P = require("pino");
 
 const {
   default: makeWASocket,
-  useMultiFileAuthState
+  useSingleFileAuthState
 } = require("@whiskeysockets/baileys");
 const axios = require("axios");
 const cors = require("cors");
@@ -21,9 +21,9 @@ app.use(express.json());
 
 async function startWhatsApp() {
 
-  const { state, saveCreds } =
-    await useMultiFileAuthState("auth");
-
+  const { state, saveState } = 
+await useSingleFileAuthState("./auth_info.json");
+  
   sock = makeWASocket({
   auth: state,
   printQRInTerminal: true,
@@ -64,7 +64,7 @@ sock.ev.on("connection.update", async (update) => {
 
 });
 
-sock.ev.on("creds.update", saveCreds);
+sock.ev.on("creds.update", saveState);
   
 }
 
