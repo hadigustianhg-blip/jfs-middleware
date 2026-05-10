@@ -23,7 +23,7 @@ app.use(express.json());
 async function startWhatsApp() {
 
   const { state, saveCreds } =
-  await useMultiFileAuthState("auth");
+  await useMultiFileAuthState("auth2");
 
   const { version } =
   await fetchLatestBaileysVersion();
