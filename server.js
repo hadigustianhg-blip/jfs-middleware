@@ -13,6 +13,7 @@ const moment = require("moment-timezone");
 const app = express();
 
 let sock;
+let latestQR = "";
 
 app.use(cors());
 app.use(express.json());
@@ -32,14 +33,17 @@ sock.ev.on("connection.update", async (update) => {
 
   const { connection, qr } = update;
 
+  console.log("QR VALUE:", qr);
+
   if (qr) {
+
+    latestQR = qr;
 
     console.log("====================");
     console.log("SCAN QR WHATSAPP");
     console.log("====================");
 
-    const qrcode = require("qrcode-terminal");
-    qrcode.generate(qr, { small: true });
+    console.log(qr);
 
   }
 
@@ -58,6 +62,7 @@ sock.ev.on("creds.update", saveCreds);
   }
 
 startWhatsApp();
+
 
 // 🔐 TOKEN
 let AUTH_TOKEN = process.env.AUTH_TOKEN || "";
@@ -84,8 +89,24 @@ app.get("/test-wa", async (req, res) => {
 
     console.log(err);
 
-    res.send("Gagal kirim pesan");
+    res.send("Gagal kirim pesan");  
   }
+  
+});
+  
+app.get("/qr", async (req, res) => {
+
+  if (!latestQR) {
+    return res.send("QR belum tersedia");
+  }
+
+  const QRCode = require("qrcode");
+
+  const image = await QRCode.toDataURL(latestQR);
+
+  res.send(`
+    <img src="${image}" />
+  `);
 
 });
 
