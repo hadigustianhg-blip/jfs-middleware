@@ -62,10 +62,33 @@ let AUTH_TOKEN = process.env.AUTH_TOKEN || "";
 
 // ================= ROOT =================
 app.get("/", (req, res) => {
-  res.send("API JFS Middleware (Pickup + Dispatch) 🚀");
+  res.send("WHATSAPP VERSION AKTIF 🚀");
 });
 
 // ================= SET TOKEN =================
+app.get("/test-wa", async (req, res) => {
+
+  try {
+
+    await sock.sendMessage(
+      "6282116534196@s.whatsapp.net",
+      {
+        text: "WhatsApp bot berhasil terhubung 🚀"
+      }
+    );
+
+    res.send("Pesan berhasil dikirim");
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.send("Gagal kirim pesan");
+
+  }
+
+});
+
 app.get("/set-token", (req, res) => {
   if (!req.query.token) {
     return res.status(400).json({ error: "Token wajib diisi" });
@@ -521,28 +544,6 @@ app.get("/jfs-cod", async (req, res) => {
 });
 
 // ================= PORT =================
-app.get("/test-wa", async (req, res) => {
-
-  try {
-
-    await sock.sendMessage(
-      "6282116534196@s.whatsapp.net",
-      {
-        text: "WhatsApp bot berhasil terhubung 🚀"
-      }
-    );
-
-    res.send("Pesan berhasil dikirim");
-
-  } catch (err) {
-
-    console.log(err);
-
-    res.send("Gagal kirim pesan");
-
-  }
-
-});
 
 const PORT = process.env.PORT || 3000;
 
