@@ -55,10 +55,6 @@ async function startWhatsApp() {
 
     }
 
-  });
-
-}
-
 startWhatsApp();
 
 // 🔐 TOKEN
