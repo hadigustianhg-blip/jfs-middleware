@@ -62,10 +62,9 @@ let AUTH_TOKEN = process.env.AUTH_TOKEN || "";
 
 // ================= ROOT =================
 app.get("/", (req, res) => {
-  res.send("WHATSAPP VERSION AKTIF 🚀");
+  res.send("WHATSAPP VERSION AKTIF V2🚀");
 });
 
-// ================= SET TOKEN =================
 app.get("/test-wa", async (req, res) => {
 
   try {
