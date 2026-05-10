@@ -54,6 +54,8 @@ sock.ev.on("connection.update", async (update) => {
 });
 
 sock.ev.on("creds.update", saveCreds);
+  
+  }
 
 startWhatsApp();
 
