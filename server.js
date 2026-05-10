@@ -28,7 +28,7 @@ async function startWhatsApp() {
   logger: P({ level: "silent" })
 });
 
-  sock.ev.on("connection.update", async (update) => {
+sock.ev.on("connection.update", async (update) => {
 
   const { connection, qr } = update;
 
@@ -53,7 +53,7 @@ async function startWhatsApp() {
 
 });
 
-  }
+sock.ev.on("creds.update", saveCreds);
 
 startWhatsApp();
 
