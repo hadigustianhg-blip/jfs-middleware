@@ -27,6 +27,7 @@ async function startWhatsApp() {
   sock = makeWASocket({
   auth: state,
   printQRInTerminal: true,
+  browser: ["Ubuntu", "Chrome", "20.0.04"],
   logger: P({ level: "silent" })
 });
 
@@ -56,22 +57,9 @@ sock.ev.on("connection.update", async (update) => {
 
   if (connection === "close") {
 
-    console.log("WA DISCONNECTED");
+    console.log("WA DISCONNECTED", lastDisconnect);
 
-    if (!reconnecting) {
-
-      reconnecting = true;
-
-      setTimeout(() => {
-
-        reconnecting = false;
-
-        startWhatsApp();
-
-      }, 5000);
-
-    }
-
+    console.log("MENUNGGU RESTART MANUAL");
   }
 
 });
