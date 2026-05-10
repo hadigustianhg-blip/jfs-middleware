@@ -1,6 +1,5 @@
 const express = require("express");
 const P = require("pino");
-
 const {
   default: makeWASocket,
   useMultiFileAuthState
@@ -24,13 +23,13 @@ async function startWhatsApp() {
   const { state, saveCreds } =
 await useMultiFileAuthState("auth");
   
-  sock = makeWASocket({
-  auth: state,
-  printQRInTerminal: true,
-  browser: ["Ubuntu", "Chrome", "20.0.04"],
-  logger: P({ level: "silent" })
+sock = makeWASocket({
+auth: state,
+version,
+printQRInTerminal: true,
+logger: P({ level: "silent" })
 });
-
+  
 sock.ev.on("connection.update", async (update) => {
 
   const { connection, qr, lastDisconnect } = update;
