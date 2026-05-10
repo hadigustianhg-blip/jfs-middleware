@@ -1,4 +1,10 @@
 const express = require("express");
+const P = require("pino");
+
+const {
+  default: makeWASocket,
+  useMultiFileAuthState
+} = require("@whiskeysockets/baileys");
 const axios = require("axios");
 const cors = require("cors");
 const FormData = require("form-data");
@@ -6,8 +12,50 @@ const moment = require("moment-timezone");
 
 const app = express();
 
+let sock;
+
 app.use(cors());
 app.use(express.json());
+
+async function startWhatsApp() {
+
+  const { state, saveCreds } =
+    await useMultiFileAuthState("auth");
+
+  sock = makeWASocket({
+    auth: state,
+    logger: P({ level: "silent" })
+  });
+
+  sock.ev.on("creds.update", saveCreds);
+
+  sock.ev.on("connection.update", async (update) => {
+
+    const { connection, qr } = update;
+
+    if (qr) {
+
+      console.log("======================");
+      console.log("SCAN QR WHATSAPP");
+      console.log("======================");
+
+      console.log(qr);
+
+    }
+
+    if (connection === "open") {
+
+      console.log("======================");
+      console.log("WHATSAPP CONNECTED");
+      console.log("======================");
+
+    }
+
+  });
+
+}
+
+startWhatsApp();
 
 // 🔐 TOKEN
 let AUTH_TOKEN = process.env.AUTH_TOKEN || "";
@@ -473,6 +521,29 @@ app.get("/jfs-cod", async (req, res) => {
 });
 
 // ================= PORT =================
+app.get("/test-wa", async (req, res) => {
+
+  try {
+
+    await sock.sendMessage(
+      "6282116534196@s.whatsapp.net",
+      {
+        text: "WhatsApp bot berhasil terhubung 🚀"
+      }
+    );
+
+    res.send("Pesan berhasil dikirim");
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.send("Gagal kirim pesan");
+
+  }
+
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, "0.0.0.0", () => {
