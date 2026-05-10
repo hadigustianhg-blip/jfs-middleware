@@ -58,6 +58,7 @@ const qr = update.qr;
 
 sock.ev.on("creds.update", saveCreds);
   
+}
 
 startWhatsApp();
 
