@@ -21,8 +21,8 @@ app.use(express.json());
 
 async function startWhatsApp() {
 
-  const { state, saveState } = 
-await useSingleFileAuthState("./auth_info.json");
+  const { state, saveState } =
+useSingleFileAuthState("./auth_info.json");
   
   sock = makeWASocket({
   auth: state,
