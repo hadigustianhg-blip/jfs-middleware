@@ -14,6 +14,7 @@ const app = express();
 
 let sock;
 let latestQR = "";
+let reconnecting = false;
 
 app.use(cors());
 app.use(express.json());
@@ -31,26 +32,45 @@ async function startWhatsApp() {
 
 sock.ev.on("connection.update", async (update) => {
 
-const { connection } = update;
-const qr = update.qr;
+  const { connection, qr, lastDisconnect } = update;
 
-  console.log("QR VALUE:", qr);
+  console.log("UPDATE:", connection);
 
-  if (qr !== undefined) {
+  if (qr) {
 
-  latestQR = qr;
+    latestQR = qr;
 
-  console.log("====================");
-  console.log("QR BERHASIL DIBUAT");
-  console.log("====================");
+    console.log("====================");
+    console.log("QR BERHASIL DIBUAT");
+    console.log("====================");
 
-}
+  }
 
   if (connection === "open") {
 
-    console.log("======================");
+    console.log("====================");
     console.log("WHATSAPP CONNECTED");
-    console.log("======================");
+    console.log("====================");
+
+  }
+
+  if (connection === "close") {
+
+    console.log("WA DISCONNECTED");
+
+    if (!reconnecting) {
+
+      reconnecting = true;
+
+      setTimeout(() => {
+
+        reconnecting = false;
+
+        startWhatsApp();
+
+      }, 5000);
+
+    }
 
   }
 
