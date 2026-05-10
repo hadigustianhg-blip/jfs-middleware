@@ -31,11 +31,12 @@ async function startWhatsApp() {
 
 sock.ev.on("connection.update", async (update) => {
 
-  const { connection, qr } = update;
+const { connection } = update;
+const qr = update.qr;
 
   console.log("QR VALUE:", qr);
 
-  if (qr) {
+  if (qr !== undefined) {
 
   latestQR = qr;
 
@@ -57,7 +58,6 @@ sock.ev.on("connection.update", async (update) => {
 
 sock.ev.on("creds.update", saveCreds);
   
-  }
 
 startWhatsApp();
 
