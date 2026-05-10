@@ -28,32 +28,32 @@ async function startWhatsApp() {
   logger: P({ level: "silent" })
 });
 
-  sock.ev.on("creds.update", saveCreds);
-
   sock.ev.on("connection.update", async (update) => {
 
   const { connection, qr } = update;
 
-    if (qr) {
+  if (qr) {
 
-  console.log("====================");
-  console.log("SCAN QR WHATSAPP");
-  console.log("====================");
+    console.log("====================");
+    console.log("SCAN QR WHATSAPP");
+    console.log("====================");
 
-  const qrcode = require("qrcode-terminal");
-  qrcode.generate(qr, { small: true });
+    const qrcode = require("qrcode-terminal");
+    qrcode.generate(qr, { small: true });
 
-}
+  }
 
-    }
+  if (connection === "open") {
 
-    if (connection === "open") {
+    console.log("======================");
+    console.log("WHATSAPP CONNECTED");
+    console.log("======================");
 
-      console.log("======================");
-      console.log("WHATSAPP CONNECTED");
-      console.log("======================");
+  }
 
-    }
+});
+
+  }
 
 startWhatsApp();
 
