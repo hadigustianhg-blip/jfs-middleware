@@ -36,11 +36,14 @@ async function startWhatsApp() {
 
     if (qr) {
 
-      console.log("======================");
-      console.log("SCAN QR WHATSAPP");
-      console.log("======================");
+  console.log("====================");
+  console.log("SCAN QR WHATSAPP");
+  console.log("====================");
 
-      console.log(qr);
+  const qrcode = require("qrcode-terminal");
+  qrcode.generate(qr, { small: true });
+
+}
 
     }
 
