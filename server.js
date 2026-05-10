@@ -3,7 +3,7 @@ const P = require("pino");
 
 const {
   default: makeWASocket,
-  useSingleFileAuthState
+  useMultiFileAuthState
 } = require("@whiskeysockets/baileys");
 const axios = require("axios");
 const cors = require("cors");
@@ -21,8 +21,8 @@ app.use(express.json());
 
 async function startWhatsApp() {
 
-  const { state, saveState } =
-useSingleFileAuthState("./auth_info.json");
+  const { state, saveCreds } =
+await useMultiFileAuthState("auth");
   
   sock = makeWASocket({
   auth: state,
@@ -57,14 +57,13 @@ sock.ev.on("connection.update", async (update) => {
 
   if (connection === "close") {
 
-    console.log("WA DISCONNECTED", lastDisconnect);
+console.log("WA DISCONNECTED", lastDisconnect);
 
-    console.log("MENUNGGU RESTART MANUAL");
-  }
+}
 
 });
 
-sock.ev.on("creds.update", saveState);
+sock.ev.on("creds.update", saveCreds);
   
 }
 
