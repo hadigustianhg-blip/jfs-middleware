@@ -9,6 +9,7 @@ const axios = require("axios");
 const cors = require("cors");
 const FormData = require("form-data");
 const moment = require("moment-timezone");
+const QRCode = require("qrcode");
 
 const app = express();
 
