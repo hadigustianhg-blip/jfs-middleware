@@ -37,15 +37,13 @@ sock.ev.on("connection.update", async (update) => {
 
   if (qr) {
 
-    latestQR = qr;
+  latestQR = qr;
 
-    console.log("====================");
-    console.log("SCAN QR WHATSAPP");
-    console.log("====================");
+  console.log("====================");
+  console.log("QR BERHASIL DIBUAT");
+  console.log("====================");
 
-    console.log(qr);
-
-  }
+}
 
   if (connection === "open") {
 
