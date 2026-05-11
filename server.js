@@ -31,48 +31,47 @@ async function startWhatsApp() {
   sock = makeWASocket({
     auth: state,
     version,
-    printQRInTerminal: true,
+    printQRInTerminal: false,
     logger: P({ level: "silent" })
   });
-  
-sock.ev.on("connection.update", async (update) => {
 
-  const { connection, qr, lastDisconnect } = update;
+  // PAIRING CODE
+  if (!state.creds.registered) {
 
-  console.log("UPDATE:", connection);
+    const code =
+    await sock.requestPairingCode("6282116534196");
 
-  if (qr) {
-
-    latestQR = qr;
-
-    console.log("====================");
-    console.log("QR BERHASIL DIBUAT");
-    console.log("====================");
+    console.log("PAIRING CODE:", code);
 
   }
 
-  if (connection === "open") {
+  sock.ev.on("connection.update", async (update) => {
 
-    console.log("====================");
-    console.log("WHATSAPP CONNECTED");
-    console.log("====================");
+    const { connection, qr, lastDisconnect } = update;
 
-  }
+    console.log("UPDATE:", connection);
 
-  if (connection === "close") {
+    if (connection === "open") {
 
-console.log("WA DISCONNECTED", lastDisconnect);
+      console.log("====================");
+      console.log("WHATSAPP CONNECTED");
+      console.log("====================");
 
-}
+    }
 
-});
+    if (connection === "close") {
 
-sock.ev.on("creds.update", saveCreds);
-  
+      console.log("WA DISCONNECTED", lastDisconnect);
+
+    }
+
+  });
+
+  sock.ev.on("creds.update", saveCreds);
+
 }
 
 startWhatsApp();
-
 
 // 🔐 TOKEN
 let AUTH_TOKEN = process.env.AUTH_TOKEN || "";
