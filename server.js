@@ -206,71 +206,58 @@ app.get("/groups", async (req, res) => {
 
 });
 // ================= SEND IMAGE GROUP =================
+// ================= SEND IMAGE GROUP =================
 app.get("/send-image-group", async (req, res) => {
 
   try {
 
-    const axios = require("axios");
-
     const group = req.query.group;
     const image = req.query.image;
-    const caption =
-      req.query.caption || "";
+    const caption = req.query.caption || "";
 
     // CHECK WA
     if (!sock || !sock.user) {
-
-      return res.send(
-        "WhatsApp belum connect"
-      );
-
+      return res.send("WhatsApp belum connect");
     }
 
     // VALIDASI
     if (!group || !image) {
-
-      return res.send(
-        "group dan image wajib diisi"
-      );
-
+      return res.send("group dan image wajib diisi");
     }
 
     // DOWNLOAD IMAGE
-   const response =
-  await axios({
-    method: "get",
-    url: image,
-    responseType: "stream"
-  });
+    const response = await axios({
+      method: "get",
+      url: image,
+      responseType: "arraybuffer"
+    });
 
-await sock.sendMessage(
-  group,
-  {
-    image: response.data,
-    caption: caption
-  }
-);
+    // BUFFER IMAGE
+    const buffer = Buffer.from(response.data, "binary");
 
-    console.log(
-      "IMAGE BERHASIL:",
-      group
+    // KIRIM IMAGE
+    await sock.sendMessage(
+      group,
+      {
+        image: buffer,
+        caption: caption
+      }
     );
 
-    res.send(
-      "Image grup berhasil dikirim"
-    );
+    console.log("IMAGE BERHASIL:", group);
+
+    res.send("Image grup berhasil dikirim");
 
   } catch (err) {
 
     console.log(err);
 
-    res.send(
-      "Gagal kirim image grup"
-    );
+    res.send("Gagal kirim image grup");
 
   }
 
 });
+
 // ================= QR =================
 app.get("/qr", async (req, res) => {
 
