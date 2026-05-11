@@ -35,44 +35,86 @@ async function startWhatsApp() {
     logger: P({ level: "silent" })
   });
 
-  // PAIRING CODE
- sock.ev.on("connection.update", async (update) => {
+  // CONNECTION UPDATE
+  sock.ev.on("connection.update", async (update) => {
 
-const { connection } = update;
+    const { connection, qr, lastDisconnect } = update;
 
-console.log("UPDATE:", connection);
+    console.log("UPDATE:", connection);
 
-// saat koneksi mulai connecting
-if (connection === "connecting") {
+    // SIMPAN QR
+    if (qr) {
 
-// request pairing code
-if (!state.creds.registered) {
+      latestQR = qr;
 
-  const code =
-  await sock.requestPairingCode("6282112345678");
+      console.log("====================");
+      console.log("QR BARU DIBUAT");
+      console.log("====================");
 
-  console.log("PAIRING CODE:", code);
+    }
 
-}
+    // REQUEST PAIRING CODE
+    if (connection === "connecting" && !state.creds.registered) {
 
-}
+      setTimeout(async () => {
 
-if (connection === "open") {
+        try {
 
-console.log("====================");
-console.log("WHATSAPP CONNECTED");
-console.log("====================");
+          const code =
+          await sock.requestPairingCode("6282112345678");
 
-}
+          console.log("====================");
+          console.log("PAIRING CODE:", code);
+          console.log("====================");
 
-if (connection === "close") {
+        } catch (err) {
 
-console.log("WA DISCONNECTED");
+          console.log("GAGAL AMBIL PAIRING CODE");
+          console.log(err.message);
 
-}
+        }
 
-});
+      }, 5000);
 
+    }
+
+    // CONNECTED
+    if (connection === "open") {
+
+      console.log("====================");
+      console.log("WHATSAPP CONNECTED");
+      console.log("====================");
+
+    }
+
+    // DISCONNECTED
+    if (connection === "close") {
+
+      console.log("====================");
+      console.log("WA DISCONNECTED");
+      console.log(lastDisconnect);
+      console.log("====================");
+
+      // AUTO RECONNECT
+      if (!reconnecting) {
+
+        reconnecting = true;
+
+        setTimeout(() => {
+
+          reconnecting = false;
+
+          startWhatsApp();
+
+        }, 5000);
+
+      }
+
+    }
+
+  });
+
+  // SAVE SESSION
   sock.ev.on("creds.update", saveCreds);
 
 }
