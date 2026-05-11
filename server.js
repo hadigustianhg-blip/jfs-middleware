@@ -205,7 +205,83 @@ app.get("/groups", async (req, res) => {
   }
 
 });
-// ================= SEND IMAGE GROUP =================
+// ================= SEND GROUP TEXT =================
+app.get("/send-group", async (req, res) => {
+
+  try {
+
+    const group = req.query.group;
+    const msg = req.query.msg || "TEST GROUP";
+
+    if (!sock || !sock.user) {
+      return res.send("WhatsApp belum connect");
+    }
+
+    if (!group) {
+      return res.send("group wajib diisi");
+    }
+
+    await sock.sendMessage(
+      group,
+      {
+        text: msg
+      }
+    );
+
+    res.send("Pesan grup berhasil dikirim");
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.send("Gagal kirim pesan grup");
+
+  }
+
+});
+
+// ================= SEND IMAGE PERSONAL =================
+app.get("/send-image", async (req, res) => {
+
+  try {
+
+    const to = req.query.to;
+    const image = req.query.image;
+    const caption = req.query.caption || "";
+
+    if (!sock || !sock.user) {
+      return res.send("WhatsApp belum connect");
+    }
+
+    if (!to || !image) {
+      return res.send("to dan image wajib diisi");
+    }
+
+    const nomor =
+      to.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+
+    await sock.sendMessage(
+      nomor,
+      {
+        image: {
+          url: image
+        },
+        caption: caption
+      }
+    );
+
+    res.send("Image personal berhasil dikirim");
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.send("Gagal kirim image personal");
+
+  }
+
+});
+
 // ================= SEND IMAGE GROUP =================
 app.get("/send-image-group", async (req, res) => {
 
@@ -215,36 +291,23 @@ app.get("/send-image-group", async (req, res) => {
     const image = req.query.image;
     const caption = req.query.caption || "";
 
-    // CHECK WA
     if (!sock || !sock.user) {
       return res.send("WhatsApp belum connect");
     }
 
-    // VALIDASI
     if (!group || !image) {
       return res.send("group dan image wajib diisi");
     }
 
-    // DOWNLOAD IMAGE
-    const response = await axios({
-      method: "get",
-      url: image,
-      responseType: "arraybuffer"
-    });
-
-    // BUFFER IMAGE
-    const buffer = Buffer.from(response.data, "binary");
-
-    // KIRIM IMAGE
     await sock.sendMessage(
       group,
       {
-        image: buffer,
+        image: {
+          url: image
+        },
         caption: caption
       }
     );
-
-    console.log("IMAGE BERHASIL:", group);
 
     res.send("Image grup berhasil dikirim");
 
