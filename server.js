@@ -10,6 +10,10 @@ const cors = require("cors");
 const FormData = require("form-data");
 const moment = require("moment-timezone");
 const QRCode = require("qrcode");
+const puppeteer = require("puppeteer");
+const fs = require("fs");
+const path = require("path");
+const bodyParser = require("body-parser");
 
 const app = express();
 
@@ -19,6 +23,9 @@ let reconnecting = false;
 
 app.use(cors());
 app.use(express.json());
+
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 async function startWhatsApp() {
 
@@ -336,7 +343,22 @@ app.get("/send-image-group", async (req, res) => {
   }
 
 });
+// ================= RENDER MONITORING =================
+app.post("/render-monitoring", async (req, res) => {
 
+  try {
+
+    res.send("Render monitoring aktif");
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).send("Gagal render monitoring");
+
+  }
+
+});
 
 // ================= QR =================
 app.get("/qr", async (req, res) => {
