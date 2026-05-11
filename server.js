@@ -242,6 +242,41 @@ app.get("/send-group", async (req, res) => {
 
 });
 
+app.get("/send-image-group", async (req, res) => {
+
+  try {
+
+    const group = req.query.group;
+    const image = req.query.image;
+    const caption =
+      req.query.caption || "";
+
+    if (!sock || !sock.user) {
+      return res.send("WhatsApp belum connect");
+    }
+
+    await sock.sendMessage(
+      group,
+      {
+        image: {
+          url: image
+        },
+        caption: caption
+      }
+    );
+
+    res.send("Image grup berhasil dikirim");
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.send("Gagal kirim image grup");
+
+  }
+
+});
+
 // ================= QR =================
 app.get("/qr", async (req, res) => {
 
