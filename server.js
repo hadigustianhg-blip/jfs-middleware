@@ -348,7 +348,139 @@ app.post("/render-monitoring", async (req, res) => {
 
   try {
 
-    res.send("Render monitoring aktif");
+    const group = req.body.group;
+    const data = req.body.data;
+
+    if (!group || !data) {
+      return res.send("group dan data wajib");
+    }
+
+    // HTML TABLE
+    let rows = "";
+
+    data.forEach((d) => {
+
+      rows += `
+        <tr>
+          <td>${d.no}</td>
+          <td>${d.pickup}</td>
+          <td>${d.dispatch}</td>
+          <td>${d.cod}</td>
+          <td>${d.pending}</td>
+        </tr>
+      `;
+
+    });
+
+    const html = `
+    <html>
+    <head>
+
+      <style>
+
+        body{
+          font-family: Arial;
+          background:#f4f4f4;
+          padding:30px;
+        }
+
+        .card{
+          background:white;
+          border-radius:15px;
+          padding:20px;
+        }
+
+        h1{
+          text-align:center;
+          margin-bottom:20px;
+        }
+
+        table{
+          width:100%;
+          border-collapse:collapse;
+        }
+
+        th{
+          background:#111827;
+          color:white;
+          padding:12px;
+        }
+
+        td{
+          padding:10px;
+          border-bottom:1px solid #ddd;
+          text-align:center;
+        }
+
+      </style>
+
+    </head>
+
+    <body>
+
+      <div class="card">
+
+        <h1>DAILY MONITORING</h1>
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Pickup</th>
+              <th>Dispatch</th>
+              <th>COD</th>
+              <th>Pending</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${rows}
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </body>
+    </html>
+    `;
+
+    // PUPPETEER
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    });
+
+    const page = await browser.newPage();
+
+    await page.setViewport({
+      width: 1200,
+      height: 800
+    });
+
+    await page.setContent(html);
+
+    const imagePath =
+      path.join(__dirname, "monitoring.png");
+
+    await page.screenshot({
+      path: imagePath,
+      fullPage: true
+    });
+
+    await browser.close();
+
+    // KIRIM WA
+    await sock.sendMessage(
+      group,
+      {
+        image: fs.readFileSync(imagePath),
+        caption: "DAILY MONITORING"
+      }
+    );
+
+    res.send("Monitoring berhasil dikirim");
 
   } catch (err) {
 
@@ -359,7 +491,6 @@ app.post("/render-monitoring", async (req, res) => {
   }
 
 });
-
 // ================= QR =================
 app.get("/qr", async (req, res) => {
 
