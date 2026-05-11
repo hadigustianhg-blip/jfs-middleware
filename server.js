@@ -205,6 +205,42 @@ app.get("/groups", async (req, res) => {
   }
 
 });
+app.get("/send-group", async (req, res) => {
+
+  try {
+
+    const group = req.query.group;
+    const msg = req.query.msg || "TEST GROUP";
+
+    // CHECK WA CONNECT
+    if (!sock || !sock.user) {
+      return res.send("WhatsApp belum connect");
+    }
+
+    // VALIDASI
+    if (!group) {
+      return res.send("Group ID wajib diisi");
+    }
+
+    // KIRIM PESAN
+    await sock.sendMessage(
+      group,
+      {
+        text: msg
+      }
+    );
+
+    res.send("Pesan grup berhasil dikirim");
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.send("Gagal kirim pesan grup");
+
+  }
+
+});
 
 // ================= QR =================
 app.get("/qr", async (req, res) => {
