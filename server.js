@@ -23,7 +23,7 @@ app.use(express.json());
 async function startWhatsApp() {
 
   const { state, saveCreds } =
-  await useMultiFileAuthState("auth2");
+  await useMultiFileAuthState("auth3");
 
   const { version } =
   await fetchLatestBaileysVersion();
@@ -31,14 +31,18 @@ async function startWhatsApp() {
   sock = makeWASocket({
     auth: state,
     version,
-    printQRInTerminal: false,
+    printQRInTerminal: true,
     logger: P({ level: "silent" })
   });
 
   // CONNECTION UPDATE
   sock.ev.on("connection.update", async (update) => {
 
-    const { connection, qr, lastDisconnect } = update;
+    const {
+      connection,
+      qr,
+      lastDisconnect
+    } = update;
 
     console.log("UPDATE:", connection);
 
@@ -52,33 +56,6 @@ async function startWhatsApp() {
       console.log("====================");
 
     }
-
-    // REQUEST PAIRING CODE
-   if (!state.creds.registered) {
-
-  setTimeout(async () => {
-
-    try {
-
-      const code =
-      await sock.requestPairingCode("6282112345678");
-
-      console.log("====================");
-      console.log("PAIRING CODE:", code);
-      console.log("====================");
-
-    } catch (err) {
-
-      console.log("====================");
-      console.log("GAGAL AMBIL PAIRING CODE");
-      console.log(err.message);
-      console.log("====================");
-
-    }
-
-  }, 10000);
-
-}
 
     // CONNECTED
     if (connection === "open") {
