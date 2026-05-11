@@ -260,12 +260,20 @@ app.get("/send-image", async (req, res) => {
     const nomor =
       to.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
 
+    // DOWNLOAD IMAGE
+    const response = await axios({
+      method: "get",
+      url: image,
+      responseType: "arraybuffer"
+    });
+
+    const buffer = Buffer.from(response.data);
+
+    // KIRIM IMAGE
     await sock.sendMessage(
       nomor,
       {
-        image: {
-          url: image
-        },
+        image: buffer,
         caption: caption
       }
     );
@@ -299,12 +307,20 @@ app.get("/send-image-group", async (req, res) => {
       return res.send("group dan image wajib diisi");
     }
 
+    // DOWNLOAD IMAGE
+    const response = await axios({
+      method: "get",
+      url: image,
+      responseType: "arraybuffer"
+    });
+
+    const buffer = Buffer.from(response.data);
+
+    // KIRIM IMAGE
     await sock.sendMessage(
       group,
       {
-        image: {
-          url: image
-        },
+        image: buffer,
         caption: caption
       }
     );
@@ -320,6 +336,7 @@ app.get("/send-image-group", async (req, res) => {
   }
 
 });
+
 
 // ================= QR =================
 app.get("/qr", async (req, res) => {
