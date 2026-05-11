@@ -206,14 +206,13 @@ app.get("/groups", async (req, res) => {
 
 });
 // ================= SEND IMAGE GROUP =================
+// ================= IMAGE GROUP =================
 app.get("/send-image-group", async (req, res) => {
 
   try {
 
     const group = req.query.group;
-
     const image = req.query.image;
-
     const caption =
       req.query.caption || "";
 
@@ -267,44 +266,6 @@ app.get("/send-image-group", async (req, res) => {
   }
 
 });
-
-app.get("/send-image-group", async (req, res) => {
-
-  try {
-
-    const group = req.query.group;
-    const image = req.query.image;
-    const caption =
-      req.query.caption || "";
-
-    if (!sock || !sock.user) {
-      return res.send("WhatsApp belum connect");
-    }
-
-    await sock.sendMessage(
-      group,
-      {
-        document: {
-          url: image
-        },
-        mimetype: "application/pdf",
-        fileName: "daily-monitoring.pdf",
-        caption: caption
-      }
-    );
-
-    res.send("PDF berhasil dikirim");
-
-  } catch (err) {
-
-    console.log(err);
-
-    res.send("Gagal kirim PDF");
-
-  }
-
-});
-
 // ================= QR =================
 app.get("/qr", async (req, res) => {
 
