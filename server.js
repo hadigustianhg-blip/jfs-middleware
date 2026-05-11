@@ -54,29 +54,31 @@ async function startWhatsApp() {
     }
 
     // REQUEST PAIRING CODE
-    if (connection === "connecting" && !state.creds.registered) {
+   if (!state.creds.registered) {
 
-      setTimeout(async () => {
+  setTimeout(async () => {
 
-        try {
+    try {
 
-          const code =
-          await sock.requestPairingCode("6282112345678");
+      const code =
+      await sock.requestPairingCode("6282112345678");
 
-          console.log("====================");
-          console.log("PAIRING CODE:", code);
-          console.log("====================");
+      console.log("====================");
+      console.log("PAIRING CODE:", code);
+      console.log("====================");
 
-        } catch (err) {
+    } catch (err) {
 
-          console.log("GAGAL AMBIL PAIRING CODE");
-          console.log(err.message);
-
-        }
-
-      }, 5000);
+      console.log("====================");
+      console.log("GAGAL AMBIL PAIRING CODE");
+      console.log(err.message);
+      console.log("====================");
 
     }
+
+  }, 10000);
+
+}
 
     // CONNECTED
     if (connection === "open") {
