@@ -258,20 +258,22 @@ app.get("/send-image-group", async (req, res) => {
     await sock.sendMessage(
       group,
       {
-        image: {
+        document: {
           url: image
         },
+        mimetype: "application/pdf",
+        fileName: "daily-monitoring.pdf",
         caption: caption
       }
     );
 
-    res.send("Image grup berhasil dikirim");
+    res.send("PDF berhasil dikirim");
 
   } catch (err) {
 
     console.log(err);
 
-    res.send("Gagal kirim image grup");
+    res.send("Gagal kirim PDF");
 
   }
 
