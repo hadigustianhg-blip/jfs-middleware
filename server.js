@@ -205,38 +205,64 @@ app.get("/groups", async (req, res) => {
   }
 
 });
-app.get("/send-group", async (req, res) => {
+// ================= SEND IMAGE GROUP =================
+app.get("/send-image-group", async (req, res) => {
 
   try {
 
     const group = req.query.group;
-    const msg = req.query.msg || "TEST GROUP";
 
-    // CHECK WA CONNECT
+    const image = req.query.image;
+
+    const caption =
+      req.query.caption || "";
+
+    // CHECK WA
     if (!sock || !sock.user) {
-      return res.send("WhatsApp belum connect");
+
+      return res.send(
+        "WhatsApp belum connect"
+      );
+
     }
 
     // VALIDASI
-    if (!group) {
-      return res.send("Group ID wajib diisi");
+    if (!group || !image) {
+
+      return res.send(
+        "group dan image wajib diisi"
+      );
+
     }
 
-    // KIRIM PESAN
+    // KIRIM IMAGE
     await sock.sendMessage(
       group,
       {
-        text: msg
+        image: {
+          url: image
+        },
+
+        caption: caption
       }
     );
 
-    res.send("Pesan grup berhasil dikirim");
+    console.log(
+      "IMAGE BERHASIL DIKIRIM KE:",
+      group
+    );
+
+    res.send(
+      "Image grup berhasil dikirim"
+    );
 
   } catch (err) {
 
     console.log(err);
 
-    res.send("Gagal kirim pesan grup");
+    res.send(
+      "Gagal kirim image grup"
+    );
 
   }
 
