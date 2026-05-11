@@ -36,36 +36,42 @@ async function startWhatsApp() {
   });
 
   // PAIRING CODE
-  if (!state.creds.registered) {
+ sock.ev.on("connection.update", async (update) => {
 
-    const code =
-    await sock.requestPairingCode("6282116534196");
+const { connection } = update;
 
-    console.log("PAIRING CODE:", code);
+console.log("UPDATE:", connection);
 
-  }
+// saat koneksi mulai connecting
+if (connection === "connecting") {
 
-  sock.ev.on("connection.update", async (update) => {
+// request pairing code
+if (!state.creds.registered) {
 
-    const { connection, qr, lastDisconnect } = update;
+  const code =
+  await sock.requestPairingCode("6282112345678");
 
-    console.log("UPDATE:", connection);
+  console.log("PAIRING CODE:", code);
 
-    if (connection === "open") {
+}
 
-      console.log("====================");
-      console.log("WHATSAPP CONNECTED");
-      console.log("====================");
+}
 
-    }
+if (connection === "open") {
 
-    if (connection === "close") {
+console.log("====================");
+console.log("WHATSAPP CONNECTED");
+console.log("====================");
 
-      console.log("WA DISCONNECTED", lastDisconnect);
+}
 
-    }
+if (connection === "close") {
 
-  });
+console.log("WA DISCONNECTED");
+
+}
+
+});
 
   sock.ev.on("creds.update", saveCreds);
 
