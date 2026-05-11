@@ -236,22 +236,20 @@ app.get("/send-image-group", async (req, res) => {
     }
 
     // DOWNLOAD IMAGE
-    const response =
-      await axios.get(image, {
-        responseType: "arraybuffer"
-      });
+   const response =
+  await axios({
+    method: "get",
+    url: image,
+    responseType: "stream"
+  });
 
-    const buffer =
-      Buffer.from(response.data);
-
-    // KIRIM IMAGE
-    await sock.sendMessage(
-      group,
-      {
-        image: buffer,
-        caption: caption
-      }
-    );
+await sock.sendMessage(
+  group,
+  {
+    image: response.data,
+    caption: caption
+  }
+);
 
     console.log(
       "IMAGE BERHASIL:",
