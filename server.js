@@ -104,6 +104,7 @@ startWhatsApp();
 let AUTH_TOKEN = process.env.AUTH_TOKEN || "";
 
 // ================= ROOT =================
+// ================= TEST WA =================
 app.get("/test-wa", async (req, res) => {
 
   try {
@@ -125,27 +126,71 @@ app.get("/test-wa", async (req, res) => {
 
     console.log(err);
 
-    res.send("Gagal kirim pesan");  
+    res.send("Gagal kirim pesan");
+
   }
-  
+
 });
-  
+
+// ================= SEND WA =================
+app.get("/send", async (req, res) => {
+
+  try {
+
+    const to = req.query.to;
+    const msg = req.query.msg;
+
+    // VALIDASI
+    if (!to || !msg) {
+      return res.status(400).send("to & msg wajib");
+    }
+
+    // CHECK WA CONNECT
+    if (!sock || !sock.user) {
+      return res.send("WhatsApp belum connect");
+    }
+
+    // FORMAT NOMOR
+    const nomor =
+      to.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+
+    // KIRIM PESAN
+    await sock.sendMessage(
+      nomor,
+      {
+        text: msg
+      }
+    );
+
+    res.send("Pesan berhasil dikirim");
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.send("Gagal kirim pesan");
+
+  }
+
+});
+
+// ================= QR =================
 app.get("/qr", async (req, res) => {
 
   if (!latestQR) {
     return res.send("QR belum tersedia");
   }
 
-  const QRCode = require("qrcode");
-
   const image = await QRCode.toDataURL(latestQR);
 
   res.send(`
-    <img src="${image}" />
+    <div style="padding:20px">
+      <h2>QR WhatsApp</h2>
+      <img src="${image}" />
+    </div>
   `);
 
 });
-
 app.get("/set-token", (req, res) => {
   if (!req.query.token) {
     return res.status(400).json({ error: "Token wajib diisi" });
