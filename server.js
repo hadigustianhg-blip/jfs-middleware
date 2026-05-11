@@ -173,6 +173,38 @@ app.get("/send", async (req, res) => {
   }
 
 });
+// ================= GROUP LIST =================
+app.get("/groups", async (req, res) => {
+
+  try {
+
+    if (!sock || !sock.user) {
+      return res.send("WhatsApp belum connect");
+    }
+
+    const groups =
+      await sock.groupFetchAllParticipating();
+
+    const data =
+      Object.values(groups).map(g => ({
+
+        id: g.id,
+
+        nama: g.subject
+
+      }));
+
+    res.json(data);
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.send("Gagal ambil grup");
+
+  }
+
+});
 
 // ================= QR =================
 app.get("/qr", async (req, res) => {
