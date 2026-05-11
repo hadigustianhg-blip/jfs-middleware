@@ -349,67 +349,55 @@ app.post("/render-monitoring", async (req, res) => {
   try {
 
     const group = req.body.group;
-    const data = req.body.data;
+    const table = req.body.table;
 
-    if (!group || !data) {
-      return res.send("group dan data wajib");
+    if (!group || !table) {
+      return res.send("group dan table wajib");
     }
 
-    // HTML TABLE
-    let rows = "";
-
-    data.forEach((d) => {
-
-      rows += `
-        <tr>
-          <td>${d.no}</td>
-          <td>${d.pickup}</td>
-          <td>${d.dispatch}</td>
-          <td>${d.cod}</td>
-          <td>${d.pending}</td>
-        </tr>
-      `;
-
-    });
-
+    // HTML
     const html = `
     <html>
+
     <head>
 
       <style>
 
         body{
           font-family: Arial;
-          background:#f4f4f4;
-          padding:30px;
+          background:#0f172a;
+          padding:20px;
         }
 
         .card{
           background:white;
-          border-radius:15px;
+          border-radius:16px;
+          overflow:hidden;
           padding:20px;
         }
 
         h1{
+          margin:0 0 20px 0;
           text-align:center;
-          margin-bottom:20px;
+          color:#111827;
         }
 
         table{
           width:100%;
           border-collapse:collapse;
-        }
-
-        th{
-          background:#111827;
-          color:white;
-          padding:12px;
+          font-size:14px;
         }
 
         td{
-          padding:10px;
-          border-bottom:1px solid #ddd;
+          border:1px solid #d1d5db;
+          padding:8px;
           text-align:center;
+        }
+
+        tr:nth-child(1){
+          background:#1d4ed8;
+          color:white;
+          font-weight:bold;
         }
 
       </style>
@@ -424,39 +412,31 @@ app.post("/render-monitoring", async (req, res) => {
 
         <table>
 
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Pickup</th>
-              <th>Dispatch</th>
-              <th>COD</th>
-              <th>Pending</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            ${rows}
-          </tbody>
+          ${table}
 
         </table>
 
       </div>
 
     </body>
+
     </html>
     `;
 
     // PUPPETEER
     const browser = await puppeteer.launch({
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox"
+      ]
     });
 
     const page = await browser.newPage();
 
     await page.setViewport({
-      width: 1200,
-      height: 800
+      width: 1600,
+      height: 1200
     });
 
     await page.setContent(html);
@@ -471,7 +451,7 @@ app.post("/render-monitoring", async (req, res) => {
 
     await browser.close();
 
-    // KIRIM WA
+    // SEND WA
     await sock.sendMessage(
       group,
       {
@@ -491,6 +471,61 @@ app.post("/render-monitoring", async (req, res) => {
   }
 
 });
+
+// ================= SEND PDF =================
+app.get("/send-pdf", async (req, res) => {
+
+  try {
+
+    const to = req.query.to;
+    const pdf = req.query.pdf;
+    const caption =
+      req.query.caption || "FILE PDF";
+
+    if (!sock || !sock.user) {
+      return res.send("WhatsApp belum connect");
+    }
+
+    if (!to || !pdf) {
+      return res.send("to dan pdf wajib diisi");
+    }
+
+    const nomor =
+      to.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+
+    // DOWNLOAD PDF
+    const response = await axios({
+      method: "get",
+      url: pdf,
+      responseType: "arraybuffer"
+    });
+
+    const buffer =
+      Buffer.from(response.data);
+
+    // KIRIM PDF
+    await sock.sendMessage(
+      nomor,
+      {
+        document: buffer,
+        mimetype: "application/pdf",
+        fileName: "Slip-Gaji.pdf",
+        caption: caption
+      }
+    );
+
+    res.send("PDF berhasil dikirim");
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.send("Gagal kirim PDF");
+
+  }
+
+});
+  
 // ================= QR =================
 app.get("/qr", async (req, res) => {
 
