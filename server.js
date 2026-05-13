@@ -305,6 +305,129 @@ app.get("/jfs-dispatch", async (req, res) => {
   }
 });
 
+// ================= AGING SIGN =================
+app.get("/jfs-aging-sign", async (req, res) => {
+
+  try {
+
+    if (!AUTH_TOKEN) {
+      return res.status(400).json({
+        error: "Token kosong"
+      });
+    }
+
+    const date =
+      req.query.date ||
+      moment().tz("Asia/Jakarta").format("YYYY-MM-DD");
+
+    const payload = {
+
+      timeType: "sign",
+
+      beginDate: date,
+      endDate: date,
+
+      netType: "2",
+
+      businessModelId: "0",
+
+      paginationSearchType: "list",
+
+      current: 1,
+      size: 20,
+
+      countryId: "1",
+
+      dispatchCode: "",
+
+      isReceivePay: "",
+
+      isRefund: "",
+
+      sqlCode: "realtime_bus_aging_sign_sum_nd"
+    };
+
+    const response = await axios.post(
+
+      "https://jfsgw.jtcargo.co.id/jfs-report-leader/report/dynamicReport/findByPagination?sqlCode=realtime_bus_aging_sign_sum_nd&dcr_key=57b048fb-bc8c-4d24-982b-a750b7ce8693",
+
+      payload,
+
+      {
+        headers: {
+
+          "Accept": "application/json, text/plain, */*",
+
+          "Content-Type": "application/json;charset=UTF-8",
+
+          "Authtoken": AUTH_TOKEN,
+
+          "Lang": "ID",
+          "Langtype": "ID",
+
+          "Origin": "https://jfs.jtcargo.co.id",
+
+          "Referer": "https://jfs.jtcargo.co.id/",
+
+          "Routename": "Bd-theme-42cb1bb7-3560-47e0-923a-f87ea5f7b1fe",
+
+          "User-Agent":
+            "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36"
+        }
+      }
+    );
+
+    const records =
+      response?.data?.data?.records || [];
+
+    const clean = records.map(item => ({
+
+      signTimelyTotal: item.signTimelyTotal || 0,
+
+      networkName: item.networkName || "",
+
+      signDelayOtherTotal: item.signDelayOtherTotal || 0,
+
+      signTimelyRate: item.signTimelyRate || "0%",
+
+      problemOtherTotal: item.problemOtherTotal || 0,
+
+      queryTime: item.queryTime || "",
+
+      sendCenterTotal: item.sendCenterTotal || 0,
+
+      signDelayNoSignTotal: item.signDelayNoSignTotal || 0
+
+    }));
+
+    res.json({
+
+      success: true,
+
+      total: clean.length,
+
+      data: clean
+
+    });
+
+  } catch (error) {
+
+    console.error(
+      "ERROR AGING SIGN:",
+      error.response?.data || error.message
+    );
+
+    res.status(500).json({
+
+      error: "Gagal ambil aging sign",
+
+      detail:
+        error.response?.data ||
+        error.message
+    });
+  }
+});
+
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
