@@ -596,6 +596,212 @@ app.get("/jfs-cod", async (req, res) => {
   }
 });
 
+// ================= IBK FUND =================
+app.get("/jfs-ibk-fund", async (req, res) => {
+
+  try {
+
+    // =========================
+    // CHECK TOKEN
+    // =========================
+    if (!AUTH_TOKEN) {
+      return res.status(400).json({
+        error: "Token kosong"
+      });
+    }
+
+    // =========================
+    // DATE WIB
+    // =========================
+    const date =
+      req.query.date ||
+      moment().tz("Asia/Jakarta").format("YYYY-MM-DD");
+
+    let allRecords = [];
+    let current = 1;
+    let hasMore = true;
+
+    const maxPage = 20;
+
+    while (hasMore && current <= maxPage) {
+
+      // =========================
+      // PAYLOAD
+      // =========================
+      const payload = {
+
+        current: current,
+
+        size: 100,
+
+        countryId: "1",
+
+        recordStartTime:
+          `${date} 00:00:00`,
+
+        recordEndTime:
+          `${date} 23:59:59`
+
+      };
+
+      console.log(
+        "IBK FUND PAYLOAD:",
+        payload
+      );
+
+      // =========================
+      // REQUEST
+      // =========================
+      const response = await axios.post(
+
+        "https://jfsgw.jtcargo.co.id/financialmanagement/ibkFundRecord/page?current=1&size=100",
+
+        payload,
+
+        {
+
+          headers: {
+
+            "Accept":
+              "application/json, text/plain, */*",
+
+            "Content-Type":
+              "application/json;charset=UTF-8",
+
+            "Authtoken":
+              AUTH_TOKEN,
+
+            "Lang": "ID",
+
+            "Langtype": "ID",
+
+            "Origin":
+              "https://jfs.jtcargo.co.id",
+
+            "Referer":
+              "https://jfs.jtcargo.co.id/",
+
+            "Routename":
+              "advancePaymentQuery",
+
+            "User-Agent":
+              "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36"
+
+          }
+
+        }
+      );
+
+      const resData =
+        response?.data;
+
+      console.log(
+        "RAW IBK FUND:",
+        JSON.stringify(resData).slice(0, 1000)
+      );
+
+      // =========================
+      // RECORDS
+      // =========================
+      const records =
+        resData?.data?.records || [];
+
+      console.log(
+        "IBK FUND PAGE:",
+        current,
+        records.length
+      );
+
+      allRecords =
+        allRecords.concat(records);
+
+      // =========================
+      // STOP PAGINATION
+      // =========================
+      if (!records.length || records.length < 100) {
+
+        hasMore = false;
+
+      } else {
+
+        current++;
+
+      }
+
+      // anti limit
+      await new Promise(r =>
+        setTimeout(r, 300)
+      );
+
+    }
+
+    // =========================
+    // FORMAT DATA
+    // =========================
+    const clean = allRecords.map(item => ({
+
+      tradeType:
+        item.tradeType || 0,
+
+      networkName:
+        item.networkName || "",
+
+      waybillNo:
+        item.waybillNo || "",
+
+      feeItemTypeName:
+        item.feeItemTypeName || "",
+
+      amount:
+        item.amount || 0,
+
+      lastAmount:
+        item.lastAmount || 0,
+
+      afterAmount:
+        item.afterAmount || 0,
+
+      tradeTime:
+        item.tradeTime || ""
+
+    }));
+
+    // =========================
+    // RESPONSE
+    // =========================
+    res.json({
+
+      success: true,
+
+      total: clean.length,
+
+      page: current - 1,
+
+      data: clean
+
+    });
+
+  } catch (error) {
+
+    console.error(
+      "ERROR IBK FUND:",
+      error.response?.data || error.message
+    );
+
+    res.status(500).json({
+
+      error:
+        "Gagal ambil data IBK FUND",
+
+      detail:
+        error.response?.data ||
+        error.message
+
+    });
+
+  }
+
+});
 
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
