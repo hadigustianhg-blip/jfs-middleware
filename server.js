@@ -428,6 +428,36 @@ app.get("/jfs-aging-sign", async (req, res) => {
   }
 });
 
+// ================= QR =================
+app.get("/qr", async (req, res) => {
+
+  if (!latestQR) {
+    return res.send("QR belum tersedia");
+  }
+
+  const image = await QRCode.toDataURL(latestQR);
+
+  res.send(`
+    <div style="padding:20px">
+      <h2>QR WhatsApp</h2>
+      <img src="${image}" />
+    </div>
+  `);
+
+});
+app.get("/set-token", (req, res) => {
+  if (!req.query.token) {
+    return res.status(400).json({ error: "Token wajib diisi" });
+  }
+
+  AUTH_TOKEN = req.query.token;
+
+  res.json({
+    message: "Token berhasil diupdate",
+    token: AUTH_TOKEN
+  });
+});
+
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
