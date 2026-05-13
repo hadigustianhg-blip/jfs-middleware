@@ -596,8 +596,8 @@ app.get("/jfs-cod", async (req, res) => {
   }
 });
 
-// ================= IBK FUND =================
-app.get("/jfs-ibk-fund", async (req, res) => {
+// ================= IBK REPORT =================
+app.get("/jfs-ibk-report", async (req, res) => {
 
   try {
 
@@ -605,20 +605,35 @@ app.get("/jfs-ibk-fund", async (req, res) => {
     // CHECK TOKEN
     // =========================
     if (!AUTH_TOKEN) {
+
       return res.status(400).json({
         error: "Token kosong"
       });
+
     }
 
     // =========================
     // DATE WIB
     // =========================
-    const date =
-      req.query.date ||
-      moment().tz("Asia/Jakarta").format("YYYY-MM-DD");
+    const today =
+      moment()
+        .tz("Asia/Jakarta");
+
+    const startDate =
+      today
+        .clone()
+        .subtract(1, "day")
+        .format("YYYY-MM-DD") +
+      " 00:00:00";
+
+    const endDate =
+      today.format("YYYY-MM-DD") +
+      " 23:59:59";
 
     let allRecords = [];
+
     let current = 1;
+
     let hasMore = true;
 
     const maxPage = 20;
@@ -634,18 +649,26 @@ app.get("/jfs-ibk-fund", async (req, res) => {
 
         size: 100,
 
+        financialCenterId: 183,
+
+        networkId: 2015,
+
+        timeType: 1,
+
+        searchType: 1,
+
         countryId: "1",
 
         recordStartTime:
-          `${date} 00:00:00`,
+          startDate,
 
         recordEndTime:
-          `${date} 23:59:59`
+          endDate
 
       };
 
       console.log(
-        "IBK FUND PAYLOAD:",
+        "IBK REPORT PAYLOAD:",
         payload
       );
 
@@ -654,7 +677,7 @@ app.get("/jfs-ibk-fund", async (req, res) => {
       // =========================
       const response = await axios.post(
 
-        "https://jfsgw.jtcargo.co.id/financialmanagement/ibkFundRecord/page?current=1&size=100",
+        "https://jfsgw.jtcargo.co.id/financialmanagement/ibkFundRecord/report?current=1&size=100",
 
         payload,
 
@@ -696,7 +719,7 @@ app.get("/jfs-ibk-fund", async (req, res) => {
         response?.data;
 
       console.log(
-        "RAW IBK FUND:",
+        "RAW IBK REPORT:",
         JSON.stringify(resData).slice(0, 1000)
       );
 
@@ -707,7 +730,7 @@ app.get("/jfs-ibk-fund", async (req, res) => {
         resData?.data?.records || [];
 
       console.log(
-        "IBK FUND PAGE:",
+        "IBK REPORT PAGE:",
         current,
         records.length
       );
@@ -740,29 +763,23 @@ app.get("/jfs-ibk-fund", async (req, res) => {
     // =========================
     const clean = allRecords.map(item => ({
 
-      tradeType:
-        item.tradeType || 0,
-
       networkName:
         item.networkName || "",
 
-      waybillNo:
-        item.waybillNo || "",
+      tradeType:
+        item.tradeType || 0,
+
+      feeTypeName:
+        item.feeTypeName || "",
 
       feeItemTypeName:
         item.feeItemTypeName || "",
 
+      date:
+        item.date || "",
+
       amount:
-        item.amount || 0,
-
-      lastAmount:
-        item.lastAmount || 0,
-
-      afterAmount:
-        item.afterAmount || 0,
-
-      tradeTime:
-        item.tradeTime || ""
+        item.amount || 0
 
     }));
 
@@ -784,14 +801,14 @@ app.get("/jfs-ibk-fund", async (req, res) => {
   } catch (error) {
 
     console.error(
-      "ERROR IBK FUND:",
+      "ERROR IBK REPORT:",
       error.response?.data || error.message
     );
 
     res.status(500).json({
 
       error:
-        "Gagal ambil data IBK FUND",
+        "Gagal ambil data IBK REPORT",
 
       detail:
         error.response?.data ||
