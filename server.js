@@ -820,39 +820,84 @@ app.get("/jfs-ibk-report", async (req, res) => {
 
 });
 // ================= SECRET INFO =================
-app.post("/jfs-sensitive", async (req, res) => {
+app.get("/jfs-sensitive", async (req, res) => {
 
   try {
 
-    const { waybillNo } = req.body;
+    if (!AUTH_TOKEN) {
 
-    const response = await axios.post(
+      return res.status(400).json({
+        error: "Token kosong"
+      });
 
-      "https://jfsgw.jtcargo.co.id/networkmanagement/dispatchWaybill/sensitiveDetailByWaybillNo?waybillNo=" +
-      waybillNo +
-      "&chanel=2",
+    }
 
-      {
-        countryId: "1"
-      },
+    const waybillNo =
+      req.query.waybillNo;
 
-      {
+    console.log(
+      "SENSITIVE REQUEST:",
+      waybillNo
+    );
+
+    const response =
+      await axios({
+
+        method: "POST",
+
+        url:
+          "https://jfsgw.jtcargo.co.id/networkmanagement/dispatchWaybill/sensitiveDetailByWaybillNo",
+
+        params: {
+
+          waybillNo:
+            waybillNo,
+
+          chanel: 2
+
+        },
+
         headers: {
 
-          "Authtoken":
-            process.env.JFS_TOKEN,
+          "Accept":
+            "application/json, text/plain, */*",
 
           "Content-Type":
             "application/json;charset=UTF-8",
 
-          "Lang": "ID",
-          "Langtype": "ID",
-          "Routename": "dispatchWaybill",
-          "Origin": "https://jfs.jtcargo.co.id",
-          "Referer": "https://jfs.jtcargo.co.id/"
+          "Authtoken":
+            AUTH_TOKEN,
+
+          "Lang":
+            "ID",
+
+          "Langtype":
+            "ID",
+
+          "Origin":
+            "https://jfs.jtcargo.co.id",
+
+          "Referer":
+            "https://jfs.jtcargo.co.id/",
+
+          "Routename":
+            "dispatchWaybill",
+
+          "User-Agent":
+            "Mozilla/5.0"
+
+        },
+
+        data: {
+
+          countryId: "1"
 
         }
-      }
+
+      });
+
+    console.log(
+      "SENSITIVE SUCCESS"
     );
 
     const d =
@@ -906,11 +951,18 @@ app.post("/jfs-sensitive", async (req, res) => {
 
   } catch (err) {
 
-    res.json({
+    console.log(
+      "SENSITIVE ERROR:",
+      err.response?.data ||
+      err.message
+    );
+
+    res.status(500).json({
 
       success: false,
 
       error:
+        err.response?.data ||
         err.message
 
     });
