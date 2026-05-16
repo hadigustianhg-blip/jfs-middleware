@@ -819,6 +819,105 @@ app.get("/jfs-ibk-report", async (req, res) => {
   }
 
 });
+// ================= SECRET INFO =================
+app.post("/jfs-sensitive", async (req, res) => {
+
+  try {
+
+    const { waybillNo } = req.body;
+
+    const response = await axios.post(
+
+      "https://jfsgw.jtcargo.co.id/networkmanagement/dispatchWaybill/sensitiveDetailByWaybillNo?waybillNo=" +
+      waybillNo +
+      "&chanel=2",
+
+      {
+        countryId: "1"
+      },
+
+      {
+        headers: {
+
+          "Authtoken":
+            process.env.JFS_TOKEN,
+
+          "Content-Type":
+            "application/json;charset=UTF-8",
+
+          "Lang": "ID",
+          "Langtype": "ID",
+          "Routename": "dispatchWaybill",
+          "Origin": "https://jfs.jtcargo.co.id",
+          "Referer": "https://jfs.jtcargo.co.id/"
+
+        }
+      }
+    );
+
+    const d =
+      response.data.data || {};
+
+    res.json({
+
+      success: true,
+
+      data: {
+
+        waybillNo:
+          d.waybillNo || "",
+
+        dispatchTime:
+          d.dispatchTime || "",
+
+        dispatchStaffName:
+          d.dispatchStaffName || "",
+
+        receiverName:
+          d.receiverName || "",
+
+        receiverMobilePhone:
+          d.receiverMobilePhone || "",
+
+        receiverTelphone:
+          d.receiverTelphone || "",
+
+        receiverDetailedAddress:
+          d.receiverDetailedAddress || "",
+
+        chargeWeight:
+          d.chargeWeight || 0,
+
+        abnormalName:
+          d.abnormalName || "",
+
+        updateTime:
+          d.updateTime || "",
+
+        codMoney:
+          d.codMoney || 0,
+
+        goodsName:
+          d.goodsName || ""
+
+      }
+
+    });
+
+  } catch (err) {
+
+    res.json({
+
+      success: false,
+
+      error:
+        err.message
+
+    });
+
+  }
+
+});
 
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
