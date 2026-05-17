@@ -970,14 +970,17 @@ app.get("/jfs-sensitive", async (req, res) => {
   }
 
 });
-// ================= JFS WAYBILL LIST =================
-app.get("/jfs-waybill-list", async (req, res) => {
+
+// ================= JFS OMS FULL =================
+app.get("/jfs-oms-full", async (req, res) => {
 
   try {
 
     const FormData = require("form-data");
 
     const form = new FormData();
+
+    // ================= FILTER =================
 
     form.append("current", 1);
 
@@ -995,18 +998,25 @@ app.get("/jfs-waybill-list", async (req, res) => {
 
     form.append("timeType", 1);
 
+    // STATUS OMS
     form.append(
       "orderStatusCode",
-      "100,106,101,102,105"
+      "100,101,102,105,106,107,108"
+    );
+
+    // JEMPUT PAKET
+    form.append(
+      "sendCode",
+      "01"
     );
 
     form.append("startPickTime", "");
 
     form.append("endPickTime", "");
 
-    // ================= TARIK LIST =================
+    // ================= TARIK LIST OMS =================
 
-    const response = await axios.post(
+    const listResponse = await axios.post(
 
       "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
 
@@ -1046,25 +1056,123 @@ app.get("/jfs-waybill-list", async (req, res) => {
     );
 
     const records =
-      response.data?.data?.records || [];
+      listResponse.data?.data?.records || [];
 
-    // ================= FORMAT DATA =================
+    // ================= LOOP DETAIL =================
 
-    const finalData = records.map(x => ({
+    const finalData = [];
 
-      id:
-        x.id || "",
+    for (const item of records) {
 
-      waybillId:
-        x.waybillId || "",
+      try {
 
-      orderStatusName:
-        x.orderStatusName || "",
+        // ================= DETAIL HIDE / NON HIDE =================
 
-      senderName:
-        x.senderName || ""
+        const detailResponse = await axios.get(
 
-    }));
+          `https://jfsgw.jtcargo.co.id/customerplatform/omsOrder/detailDispatchByLog?id=${item.id}`,
+
+          {
+            headers: {
+
+              accept:
+                "application/json, text/plain, */*",
+
+              authtoken:
+                AUTH_TOKEN,
+
+              lang:
+                "ID",
+
+              langtype:
+                "ID",
+
+              origin:
+                "https://jfs.jtcargo.co.id",
+
+              referer:
+                "https://jfs.jtcargo.co.id/",
+
+              routename:
+                "orderScheduling",
+
+              "user-agent":
+                "Mozilla/5.0"
+
+            }
+          }
+        );
+
+        const d =
+          detailResponse.data?.data || item;
+
+        finalData.push({
+
+          id:
+            d.id || "",
+
+          orderSourceName:
+            d.orderSourceName || "",
+
+          waybillId:
+            d.waybillId || "",
+
+          senderName:
+            d.senderName || "",
+
+          senderMobilePhone:
+            String(d.senderMobilePhone || "")
+              .replace(/\D/g, ""),
+
+          receiverCityName:
+            d.receiverCityName || "",
+
+          orderStatusName:
+            d.orderStatusName || "",
+
+          senderDetailedAddress:
+            d.senderDetailedAddress || "",
+
+          sendName:
+            d.sendName || "",
+
+          goodsName:
+            d.goodsName || "",
+
+          packageNumber:
+            d.packageNumber || 0,
+
+          packageTotalWeight:
+            d.packageTotalWeight || 0,
+
+          customerOrderTime:
+            d.customerOrderTime || "",
+
+          bestPickTimeStart:
+            d.bestPickTimeStart || "",
+
+          bestPickTimeEnd:
+            d.bestPickTimeEnd || "",
+
+          pickStaffName:
+            d.pickStaffName || "",
+
+          dispatchStaffTime:
+            d.dispatchStaffTime || ""
+
+        });
+
+      } catch (detailErr) {
+
+        console.log(
+          "DETAIL ERROR:",
+          item.id,
+          detailErr.response?.data || detailErr.message
+        );
+
+      }
+
+    }
 
     // ================= RETURN =================
 
@@ -1083,135 +1191,7 @@ app.get("/jfs-waybill-list", async (req, res) => {
   } catch (err) {
 
     console.log(
-      "WAYBILL LIST ERROR:",
-      err.response?.data || err.message
-    );
-
-    res.status(500).json({
-
-      success: false,
-
-      error:
-        err.response?.data || err.message
-
-    });
-
-  }
-
-});
-// ================= JFS DETAIL WAYBILL =================
-app.get("/jfs-detail", async (req, res) => {
-
-  try {
-
-    const id =
-      req.query.id;
-
-    if (!id) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        error: "ID wajib diisi"
-
-      });
-
-    }
-
-    // ================= DETAIL =================
-
-    const response = await axios.get(
-
-      `https://jfsgw.jtcargo.co.id/customerplatform/omsOrder/detailDispatch?id=${id}`,
-
-      {
-        headers: {
-
-          accept:
-            "application/json, text/plain, */*",
-
-          authtoken:
-            AUTH_TOKEN,
-
-          lang:
-            "ID",
-
-          langtype:
-            "ID",
-
-          origin:
-            "https://jfs.jtcargo.co.id",
-
-          referer:
-            "https://jfs.jtcargo.co.id/",
-
-          routename:
-            "orderScheduling",
-
-          "user-agent":
-            "Mozilla/5.0"
-
-        }
-      }
-    );
-
-    const d =
-      response.data?.data || {};
-
-    // ================= RETURN =================
-
-    res.json({
-
-      success: true,
-
-      data: {
-
-        orderSourceName:
-          d.orderSourceName || "",
-
-        waybillId:
-          d.waybillId || "",
-
-        senderName:
-          d.senderName || "",
-
-        senderMobilePhone:
-          String(d.senderMobilePhone || "")
-            .replace(/\D/g, ""),
-
-        receiverCityName:
-          d.receiverCityName || "",
-
-        orderStatusName:
-          d.orderStatusName || "",
-
-        senderDetailedAddress:
-          d.senderDetailedAddress || "",
-
-        sendName:
-          d.sendName || "",
-
-        goodsName:
-          d.goodsName || "",
-
-        packageNumber:
-          d.packageNumber || 0,
-
-        packageTotalWeight:
-          d.packageTotalWeight || 0,
-
-        customerOrderTime:
-          d.customerOrderTime || ""
-
-      }
-
-    });
-
-  } catch (err) {
-
-    console.log(
-      "DETAIL ERROR:",
+      "OMS FULL ERROR:",
       err.response?.data || err.message
     );
 
