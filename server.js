@@ -976,6 +976,39 @@ app.get("/jfs-oms-full", async (req, res) => {
   try {
 
     // ===============================
+    // FORM DATA
+    // ===============================
+
+    const FormData = require("form-data");
+
+    const form = new FormData();
+
+    form.append("current", 1);
+
+    form.append("size", 100);
+
+    form.append(
+      "startInputTime",
+      "2026-05-11 00:00:00"
+    );
+
+    form.append(
+      "endInputTime",
+      moment().format("YYYY-MM-DD HH:mm:ss")
+    );
+
+    form.append("timeType", 1);
+
+    form.append(
+      "orderStatusCode",
+      "100,106,101,102"
+    );
+
+    form.append("startPickTime", "");
+
+    form.append("endPickTime", "");
+
+    // ===============================
     // 1. TARIK LIST OMS
     // ===============================
 
@@ -983,27 +1016,37 @@ app.get("/jfs-oms-full", async (req, res) => {
 
       "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
 
-      {
-        current: 1,
-        size: 100,
-        startInputTime: "2026-05-11 00:00:00",
-        endInputTime: moment().format("YYYY-MM-DD HH:mm:ss"),
-        timeType: 1,
-        orderStatusCode: "100,106,101,102",
-        startPickTime: "",
-        endPickTime: ""
-
-      },
+      form,
 
       {
         headers: {
-          authtoken: AUTH_TOKEN,
-          Lang: "ID",
-          Langtype: "ID",
-          Origin: "https://jfs.jtcargo.co.id",
-          Referer: "https://jfs.jtcargo.co.id/",
-          Routenname: "orderScheduling",
-          "Content-Type": "application/json"
+
+          ...form.getHeaders(),
+
+          accept:
+            "application/json, text/plain, */*",
+
+          authtoken:
+            AUTH_TOKEN,
+
+          lang:
+            "ID",
+
+          langtype:
+            "ID",
+
+          origin:
+            "https://jfs.jtcargo.co.id",
+
+          referer:
+            "https://jfs.jtcargo.co.id/",
+
+          routename:
+            "orderScheduling",
+
+          "user-agent":
+            "Mozilla/5.0"
+
         }
       }
     );
@@ -1027,12 +1070,31 @@ app.get("/jfs-oms-full", async (req, res) => {
 
           {
             headers: {
-              Authtoken: AUTH_TOKEN,
-              Lang: "ID",
-              Langtype: "ID",
-              Origin: "https://jfs.jtcargo.co.id",
-              Referer: "https://jfs.jtcargo.co.id/",
-              Routenname: "orderScheduling"
+
+              accept:
+                "application/json, text/plain, */*",
+
+              authtoken:
+                AUTH_TOKEN,
+
+              lang:
+                "ID",
+
+              langtype:
+                "ID",
+
+              origin:
+                "https://jfs.jtcargo.co.id",
+
+              referer:
+                "https://jfs.jtcargo.co.id/",
+
+              routename:
+                "orderScheduling",
+
+              "user-agent":
+                "Mozilla/5.0"
+
             }
           }
         );
@@ -1085,7 +1147,8 @@ app.get("/jfs-oms-full", async (req, res) => {
 
         console.log(
           "DETAIL ERROR:",
-          item.id
+          item.id,
+          err.message
         );
 
       }
@@ -1104,11 +1167,15 @@ app.get("/jfs-oms-full", async (req, res) => {
 
   } catch (err) {
 
-    console.log(err);
+    console.log(
+      "OMS ERROR:",
+      err.response?.data || err.message
+    );
 
     res.status(500).json({
       success: false,
-      error: err.message
+      error:
+        err.response?.data || err.message
     });
 
   }
