@@ -1100,11 +1100,8 @@ app.get("/jfs-oms-full", async (req, res) => {
           }
         );
 
-        const d =
-          detailResponse.data?.data || {};
-
-        // SKIP DATA KOSONG
-        if (!d.waybillId) continue;
+       const d =
+  detailResponse.data?.data || item;
 
         finalData.push({
 
