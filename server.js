@@ -983,32 +983,31 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     const form = new FormData();
 
-    form.append("current", 1);
+   form.append("current", 1);
 
-    form.append("size", 100);
+form.append("size", 100);
 
-    form.append(
-      "startInputTime",
-      "2026-05-11 00:00:00"
-    );
+form.append(
+  "startInputTime",
+  "2026-05-11 00:00:00"
+);
 
-    form.append(
-      "endInputTime",
-      moment().format("YYYY-MM-DD HH:mm:ss")
-    );
+form.append(
+  "endInputTime",
+  moment().format("YYYY-MM-DD HH:mm:ss")
+);
 
-    form.append("timeType", 1);
+form.append("timeType", 1);
 
-    // FILTER STATUS
-    form.append(
-      "orderStatusCode",
-      "101,102"
-    );
+// STATUS FILTER JFS
+form.append(
+  "orderStatusCode",
+  "100,106,101,102,105"
+);
 
-    form.append("startPickTime", "");
+form.append("startPickTime", "");
 
-    form.append("endPickTime", "");
-
+form.append("endPickTime", "");
     // ===============================
     // 1. TARIK LIST OMS
     // ===============================
