@@ -971,6 +971,186 @@ app.get("/jfs-sensitive", async (req, res) => {
 
 });
 
+// ================= OMS FULL =================
+app.get("/jfs-oms-full", async (req, res) => {
+
+  try {
+
+    const FormData = require("form-data");
+
+    const form = new FormData();
+
+    // ================= PAYLOAD =================
+
+    form.append("current", 1);
+
+    form.append("size", 100);
+
+    form.append(
+      "startInputTime",
+      "2026-05-11 00:00:00"
+    );
+
+    form.append(
+      "endInputTime",
+      moment().format("YYYY-MM-DD HH:mm:ss")
+    );
+
+    form.append("timeType", 1);
+
+    form.append("startPickTime", "");
+
+    form.append("endPickTime", "");
+
+    // ================= REQUEST =================
+
+    const response = await axios.post(
+
+      "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
+
+      form,
+
+      {
+
+        headers: {
+
+          ...form.getHeaders(),
+
+          accept:
+            "application/json, text/plain, */*",
+
+          authtoken:
+            AUTH_TOKEN,
+
+          lang:
+            "ID",
+
+          langtype:
+            "ID",
+
+          origin:
+            "https://jfs.jtcargo.co.id",
+
+          referer:
+            "https://jfs.jtcargo.co.id/",
+
+          routename:
+            "orderScheduling",
+
+          "user-agent":
+            "Mozilla/5.0"
+
+        }
+
+      }
+
+    );
+
+    // ================= DATA =================
+
+    const records =
+      response.data?.data?.records || [];
+
+    // ================= FORMAT =================
+
+    const finalData = records.map(x => ({
+
+      id:
+        x.id || "",
+
+      marketplace:
+        x.orderSourceName || "",
+
+      waybill:
+        x.waybillId || "",
+
+      status:
+        x.orderStatusName || "",
+
+      picker:
+        x.pickStaffName || "",
+
+      bestPickStart:
+        x.bestPickTimeStart || "",
+
+      bestPickEnd:
+        x.bestPickTimeEnd || "",
+
+      layanan:
+        x.sendName || "",
+
+      pengirim:
+        x.senderName || "",
+
+      noHp:
+        x.senderMobilePhone || "",
+
+      alamat:
+        x.senderDetailedAddress || "",
+
+      kotaTujuan:
+        x.receiverCityName || "",
+
+      barang:
+        x.goodsName || "",
+
+      berat:
+        x.packageTotalWeight || 0,
+
+      qty:
+        x.packageNumber || 0,
+
+      orderTime:
+        x.customerOrderTime || "",
+
+      pickTime:
+        x.pickTime || "",
+
+      assignTime:
+        x.dispatchStaffTime || "",
+
+      express:
+        x.expressTypeName || "",
+
+      payment:
+        x.paymentModeName || ""
+
+    }));
+
+    // ================= RETURN =================
+
+    res.json({
+
+      success: true,
+
+      total:
+        finalData.length,
+
+      data:
+        finalData
+
+    });
+
+  } catch (err) {
+
+    console.log(
+      "OMS FULL ERROR:",
+      err.response?.data || err.message
+    );
+
+    res.status(500).json({
+
+      success: false,
+
+      error:
+        err.response?.data || err.message
+
+    });
+
+  }
+
+});
+
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
