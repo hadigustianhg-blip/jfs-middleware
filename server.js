@@ -1067,38 +1067,38 @@ app.get("/jfs-oms-full", async (req, res) => {
 
         const detailResponse = await axios.get(
 
-          `https://jfsgw.jtcargo.co.id/customerplatform/omsOrder/detailDispatchByLog?id=${item.id}`,
+  `https://jfsgw.jtcargo.co.id/customerplatform/omsOrder/detailDispatch?id=${item.id}`,
 
-          {
-            headers: {
+  {
+    headers: {
 
-              accept:
-                "application/json, text/plain, */*",
+      accept:
+        "application/json, text/plain, */*",
 
-              authtoken:
-                AUTH_TOKEN,
+      authtoken:
+        AUTH_TOKEN,
 
-              lang:
-                "ID",
+      lang:
+        "ID",
 
-              langtype:
-                "ID",
+      langtype:
+        "ID",
 
-              origin:
-                "https://jfs.jtcargo.co.id",
+      origin:
+        "https://jfs.jtcargo.co.id",
 
-              referer:
-                "https://jfs.jtcargo.co.id/",
+      referer:
+        "https://jfs.jtcargo.co.id/",
 
-              routename:
-                "orderScheduling",
+      routename:
+        "orderScheduling",
 
-              "user-agent":
-                "Mozilla/5.0"
+      "user-agent":
+        "Mozilla/5.0"
 
-            }
-          }
-        );
+    }
+  }
+);
 
        const d =
   detailResponse.data?.data || item;
