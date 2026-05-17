@@ -1184,6 +1184,133 @@ app.get("/jfs-oms-full", async (req, res) => {
 
 });
 
+// ================= DETAIL OMS FULL =================
+app.get("/jfs-detail-full", async (req, res) => {
+
+  try {
+
+    const id =
+      req.query.id;
+
+    // ================= VALIDASI =================
+
+    if (!id) {
+
+      return res.status(400).json({
+
+        success: false,
+
+        error:
+          "id wajib diisi"
+
+      });
+
+    }
+
+    // ================= REQUEST =================
+
+    const response = await axios.get(
+
+      `https://jfsgw.jtcargo.co.id/customerplatform/omsOrder/detailDispatchByLog?id=${id}`,
+
+      {
+
+        headers: {
+
+          accept:
+            "application/json, text/plain, */*",
+
+          authtoken:
+            AUTH_TOKEN,
+
+          lang:
+            "ID",
+
+          langtype:
+            "ID",
+
+          origin:
+            "https://jfs.jtcargo.co.id",
+
+          referer:
+            "https://jfs.jtcargo.co.id/",
+
+          routename:
+            "orderScheduling",
+
+          "user-agent":
+            "Mozilla/5.0"
+
+        }
+
+      }
+
+    );
+
+    // ================= DATA =================
+
+    const d =
+      response.data?.data || {};
+
+    // ================= RETURN =================
+
+    res.json({
+
+      success: true,
+
+      data: {
+
+        id:
+          d.id || "",
+
+        waybillId:
+          d.waybillId || "",
+
+        senderName:
+          d.senderName || "",
+
+        senderMobilePhone:
+          d.senderMobilePhone || "",
+
+        receiverName:
+          d.receiverName || "",
+
+        receiverMobilePhone:
+          d.receiverMobilePhone || "",
+
+        senderDetailedAddress:
+          d.senderDetailedAddress || "",
+
+        goodsName:
+          d.goodsName || "",
+
+        customerOrderTime:
+          d.customerOrderTime || ""
+
+      }
+
+    });
+
+  } catch (err) {
+
+    console.log(
+      "DETAIL FULL ERROR:",
+      err.response?.data || err.message
+    );
+
+    res.status(500).json({
+
+      success: false,
+
+      error:
+        err.response?.data || err.message
+
+    });
+
+  }
+
+});
+
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
