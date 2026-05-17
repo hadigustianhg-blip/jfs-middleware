@@ -997,7 +997,7 @@ app.get("/jfs-oms-full", async (req, res) => {
 
       {
         headers: {
-          Authtoken: AUTH_TOKEN,
+          authtoken: AUTH_TOKEN,
           Lang: "ID",
           Langtype: "ID",
           Origin: "https://jfs.jtcargo.co.id",
