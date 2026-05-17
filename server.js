@@ -999,10 +999,11 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     form.append("timeType", 1);
 
-    form.append(
-      "orderStatusCode",
-      "100,106,101,102"
-    );
+    // HAPUS FILTER STATUS CODE
+    // form.append(
+    //   "orderStatusCode",
+    //   "100,106,101,102"
+    // );
 
     form.append("startPickTime", "");
 
@@ -1156,13 +1157,25 @@ app.get("/jfs-oms-full", async (req, res) => {
     }
 
     // ===============================
-    // 3. RETURN
+    // FILTER STATUS DIJADWALKAN
+    // ===============================
+
+    const filteredData = finalData.filter(x =>
+
+      String(x.orderStatusName)
+        .toLowerCase()
+        .includes("dijadwalkan")
+
+    );
+
+    // ===============================
+    // RETURN
     // ===============================
 
     res.json({
       success: true,
-      total: finalData.length,
-      data: finalData
+      total: filteredData.length,
+      data: filteredData
     });
 
   } catch (err) {
