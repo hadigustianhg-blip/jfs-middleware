@@ -982,37 +982,37 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     // ================= FILTER =================
 
-    form.append("current", 1);
+form.append("current", 1);
 
-    form.append("size", 100);
+form.append("size", 100);
 
-    form.append(
-      "startInputTime",
-      "2026-05-11 00:00:00"
-    );
+form.append(
+  "startInputTime",
+  "2026-05-11 00:00:00"
+);
 
-    form.append(
-      "endInputTime",
-      moment().format("YYYY-MM-DD HH:mm:ss")
-    );
+form.append(
+  "endInputTime",
+  moment().format("YYYY-MM-DD HH:mm:ss")
+);
 
-    form.append("timeType", 1);
+form.append("timeType", 1);
 
-    // STATUS OMS
-    form.append(
-      "orderStatusCode",
-      "100,101,102,105,106,107,108"
-    );
+// STATUS
+form.append(
+  "orderStatusCode",
+  "100,101,102,105,106"
+);
 
-    // JEMPUT PAKET
-    form.append(
-      "sendCode",
-      "01"
-    );
+// KOSONGKAN DULU
+form.append(
+  "sendCode",
+  ""
+);
 
-    form.append("startPickTime", "");
+form.append("startPickTime", "");
 
-    form.append("endPickTime", "");
+form.append("endPickTime", "");
 
     // ================= TARIK LIST OMS =================
 
