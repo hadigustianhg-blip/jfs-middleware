@@ -971,7 +971,7 @@ app.get("/jfs-sensitive", async (req, res) => {
 
 });
 // ================= oms pickup =================
-app.post("/jfs-oms-full", async (req, res) => {
+app.get("/jfs-oms-full", async (req, res) => {
 
   try {
 
