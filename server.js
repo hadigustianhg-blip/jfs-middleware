@@ -1088,6 +1088,10 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     const finalData = allRecords.map(x => ({
 
+      // ================= ID OMS
+      // PENTING UNTUK BUKA SENSOR HP
+      // =================
+
       id:
         x.id || "",
 
