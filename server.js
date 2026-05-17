@@ -980,43 +980,35 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     const form = new FormData();
 
-    // ================= FILTER =================
+    form.append("current", 1);
 
-form.append("current", 1);
+    form.append("size", 100);
 
-form.append("size", 100);
+    form.append(
+      "startInputTime",
+      "2026-05-11 00:00:00"
+    );
 
-form.append(
-  "startInputTime",
-  "2026-05-11 00:00:00"
-);
+    form.append(
+      "endInputTime",
+      moment().format("YYYY-MM-DD HH:mm:ss")
+    );
 
-form.append(
-  "endInputTime",
-  moment().format("YYYY-MM-DD HH:mm:ss")
-);
+    form.append("timeType", 1);
 
-form.append("timeType", 1);
+    // FILTER STATUS
+    form.append(
+      "orderStatusCode",
+      "100,106,101,102"
+    );
 
-// STATUS
-form.append(
-  "orderStatusCode",
-  "100,101,102,105,106"
-);
+    form.append("startPickTime", "");
 
-// KOSONGKAN DULU
-form.append(
-  "sendCode",
-  ""
-);
+    form.append("endPickTime", "");
 
-form.append("startPickTime", "");
+    // ================= REQUEST =================
 
-form.append("endPickTime", "");
-
-    // ================= TARIK LIST OMS =================
-
-    const listResponse = await axios.post(
+    const response = await axios.post(
 
       "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
 
@@ -1049,131 +1041,92 @@ form.append("endPickTime", "");
             "orderScheduling",
 
           "user-agent":
-            "Mozilla/5.0"
-
+            "Mozilla/5.0 (Linux; Android 6.0)"
         }
       }
     );
 
     const records =
-      listResponse.data?.data?.records || [];
+      response.data?.data?.records || [];
 
-    // ================= LOOP DETAIL =================
+    // ================= FORMAT DATA =================
 
-    const finalData = [];
+    const finalData = records.map(x => ({
 
-    for (const item of records) {
+      id:
+        x.id || "",
 
-      try {
+      waybillId:
+        x.waybillId || "",
 
-        // ================= DETAIL HIDE / NON HIDE =================
+      orderSourceName:
+        x.orderSourceName || "",
 
-        const detailResponse = await axios.get(
+      senderName:
+        x.senderName || "",
 
-          `https://jfsgw.jtcargo.co.id/customerplatform/omsOrder/detailDispatchByLog?id=${item.id}`,
+      senderMobilePhone:
+        x.senderMobilePhone || "",
 
-          {
-            headers: {
+      receiverCityName:
+        x.receiverCityName || "",
 
-              accept:
-                "application/json, text/plain, */*",
+      orderStatusName:
+        x.orderStatusName || "",
 
-              authtoken:
-                AUTH_TOKEN,
+      senderDetailedAddress:
+        x.senderDetailedAddress || "",
 
-              lang:
-                "ID",
+      sendName:
+        x.sendName || "",
 
-              langtype:
-                "ID",
+      goodsName:
+        x.goodsName || "",
 
-              origin:
-                "https://jfs.jtcargo.co.id",
+      packageNumber:
+        x.packageNumber || 0,
 
-              referer:
-                "https://jfs.jtcargo.co.id/",
+      packageTotalWeight:
+        x.packageTotalWeight || 0,
 
-              routename:
-                "orderScheduling",
+      customerOrderTime:
+        x.customerOrderTime || ""
 
-              "user-agent":
-                "Mozilla/5.0"
+    }));
 
-            }
-          }
-        );
+    // ================= RETURN =================
 
-        const d =
-          detailResponse.data?.data || item;
+    res.json({
 
-        finalData.push({
+      success: true,
 
-          id:
-            d.id || "",
+      total:
+        finalData.length,
 
-          orderSourceName:
-            d.orderSourceName || "",
+      data:
+        finalData
 
-          waybillId:
-            d.waybillId || "",
+    });
 
-          senderName:
-            d.senderName || "",
+  } catch (err) {
 
-          senderMobilePhone:
-            String(d.senderMobilePhone || "")
-              .replace(/\D/g, ""),
+    console.log(
+      "OMS FULL ERROR:",
+      err.response?.data || err.message
+    );
 
-          receiverCityName:
-            d.receiverCityName || "",
+    res.status(500).json({
 
-          orderStatusName:
-            d.orderStatusName || "",
+      success: false,
 
-          senderDetailedAddress:
-            d.senderDetailedAddress || "",
+      error:
+        err.response?.data || err.message
 
-          sendName:
-            d.sendName || "",
+    });
 
-          goodsName:
-            d.goodsName || "",
+  }
 
-          packageNumber:
-            d.packageNumber || 0,
-
-          packageTotalWeight:
-            d.packageTotalWeight || 0,
-
-          customerOrderTime:
-            d.customerOrderTime || "",
-
-          bestPickTimeStart:
-            d.bestPickTimeStart || "",
-
-          bestPickTimeEnd:
-            d.bestPickTimeEnd || "",
-
-          pickStaffName:
-            d.pickStaffName || "",
-
-          dispatchStaffTime:
-            d.dispatchStaffTime || ""
-
-        });
-
-      } catch (detailErr) {
-
-        console.log(
-          "DETAIL ERROR:",
-          item.id,
-          detailErr.response?.data || detailErr.message
-        );
-
-      }
-
-    }
-
+});
     // ================= RETURN =================
 
     res.json({
