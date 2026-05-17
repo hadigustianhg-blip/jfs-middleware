@@ -978,82 +978,115 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     const FormData = require("form-data");
 
-    const form = new FormData();
+    let currentPage = 1;
 
-    // ================= PAYLOAD =================
+    const pageSize = 100;
 
-    form.append("current", 1);
+    let allRecords = [];
 
-    form.append("size", 100);
+    let hasMore = true;
 
-    form.append(
-      "startInputTime",
-      "2026-05-11 00:00:00"
-    );
+    // ================= LOOP PAGE =================
 
-    form.append(
-      "endInputTime",
-      moment().format("YYYY-MM-DD HH:mm:ss")
-    );
+    while (hasMore) {
 
-    form.append("timeType", 1);
+      const form = new FormData();
 
-    form.append("startPickTime", "");
+      form.append("current", currentPage);
 
-    form.append("endPickTime", "");
+      form.append("size", pageSize);
 
-    // ================= REQUEST =================
+      form.append(
+        "startInputTime",
+        "2026-05-11 00:00:00"
+      );
 
-    const response = await axios.post(
+      form.append(
+        "endInputTime",
+        moment().format("YYYY-MM-DD HH:mm:ss")
+      );
 
-      "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
+      form.append("timeType", 1);
 
-      form,
+      form.append("startPickTime", "");
 
-      {
+      form.append("endPickTime", "");
 
-        headers: {
+      // ================= REQUEST =================
 
-          ...form.getHeaders(),
+      const response = await axios.post(
 
-          accept:
-            "application/json, text/plain, */*",
+        "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
 
-          authtoken:
-            AUTH_TOKEN,
+        form,
 
-          lang:
-            "ID",
+        {
 
-          langtype:
-            "ID",
+          headers: {
 
-          origin:
-            "https://jfs.jtcargo.co.id",
+            ...form.getHeaders(),
 
-          referer:
-            "https://jfs.jtcargo.co.id/",
+            accept:
+              "application/json, text/plain, */*",
 
-          routename:
-            "orderScheduling",
+            authtoken:
+              AUTH_TOKEN,
 
-          "user-agent":
-            "Mozilla/5.0"
+            lang:
+              "ID",
+
+            langtype:
+              "ID",
+
+            origin:
+              "https://jfs.jtcargo.co.id",
+
+            referer:
+              "https://jfs.jtcargo.co.id/",
+
+            routename:
+              "orderScheduling",
+
+            "user-agent":
+              "Mozilla/5.0"
+
+          }
 
         }
 
+      );
+
+      // ================= RECORD =================
+
+      const records =
+        response.data?.data?.records || [];
+
+      // ================= GABUNG =================
+
+      allRecords =
+        allRecords.concat(records);
+
+      console.log(
+        `PAGE ${currentPage} = ${records.length}`
+      );
+
+      // ================= STOP =================
+
+      if (records.length < pageSize) {
+
+        hasMore = false;
+
+      } else {
+
+        currentPage++;
+
       }
 
-    );
-
-    // ================= DATA =================
-
-    const records =
-      response.data?.data?.records || [];
+    }
 
     // ================= FORMAT =================
 
-    const finalData = records.map(x => ({
+    const finalData = allRecords.map(x => ({
 
       id:
         x.id || "",
