@@ -1156,28 +1156,16 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     }
 
-    // ===============================
-    // FILTER STATUS DIJADWALKAN
-    // ===============================
+// ===============================
+// RETURN
+// ===============================
 
-    const filteredData = finalData.filter(x =>
-
-      String(x.orderStatusName)
-        .toLowerCase()
-        .includes("dijadwalkan")
-
-    );
-
-    // ===============================
-    // RETURN
-    // ===============================
-
-    res.json({
-      success: true,
-      total: filteredData.length,
-      data: filteredData
-    });
-
+res.json({
+  success: true,
+  total: finalData.length,
+  data: finalData
+});
+    
   } catch (err) {
 
     console.log(
