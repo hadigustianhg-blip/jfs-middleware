@@ -970,6 +970,150 @@ app.get("/jfs-sensitive", async (req, res) => {
   }
 
 });
+// ================= oms pickup =================
+app.post("/jfs-oms-full", async (req, res) => {
+
+  try {
+
+    // ===============================
+    // 1. TARIK LIST OMS
+    // ===============================
+
+    const listResponse = await axios.post(
+
+      "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
+
+      {
+        current: 1,
+        size: 100,
+        startInputTime: "2026-05-11 00:00:00",
+        endInputTime: moment().format("YYYY-MM-DD HH:mm:ss"),
+        timeType: 1,
+        orderStatusCode: "100,106,101,102",
+        startPickTime: "",
+        endPickTime: ""
+
+      },
+
+      {
+        headers: {
+          Authtoken: AUTH_TOKEN,
+          Lang: "ID",
+          Langtype: "ID",
+          Origin: "https://jfs.jtcargo.co.id",
+          Referer: "https://jfs.jtcargo.co.id/",
+          Routenname: "orderScheduling",
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    const records =
+      listResponse.data?.data?.records || [];
+
+    const finalData = [];
+
+    // ===============================
+    // 2. LOOP DETAIL NON SENSOR
+    // ===============================
+
+    for (const item of records) {
+
+      try {
+
+        const detailResponse = await axios.get(
+
+          `https://jfsgw.jtcargo.co.id/customerplatform/omsOrder/detailDispatchByLog?id=${item.id}`,
+
+          {
+            headers: {
+              Authtoken: AUTH_TOKEN,
+              Lang: "ID",
+              Langtype: "ID",
+              Origin: "https://jfs.jtcargo.co.id",
+              Referer: "https://jfs.jtcargo.co.id/",
+              Routenname: "orderScheduling"
+            }
+          }
+        );
+
+        const d =
+          detailResponse.data?.data || {};
+
+        finalData.push({
+
+          orderSourceName:
+            d.orderSourceName || "",
+
+          waybillId:
+            d.waybillId || "",
+
+          senderName:
+            d.senderName || "",
+
+          senderMobilePhone:
+            String(d.senderMobilePhone || "")
+              .replace(/\D/g, ""),
+
+          receiverCityName:
+            d.receiverCityName || "",
+
+          orderStatusName:
+            d.orderStatusName || "",
+
+          senderDetailedAddress:
+            d.senderDetailedAddress || "",
+
+          sendName:
+            d.sendName || "",
+
+          goodsName:
+            d.goodsName || "",
+
+          packageNumber:
+            d.packageNumber || 0,
+
+          packageTotalWeight:
+            d.packageTotalWeight || 0,
+
+          customerOrderTime:
+            d.customerOrderTime || ""
+
+        });
+
+      } catch (err) {
+
+        console.log(
+          "DETAIL ERROR:",
+          item.id
+        );
+
+      }
+
+    }
+
+    // ===============================
+    // 3. RETURN
+    // ===============================
+
+    res.json({
+      success: true,
+      total: finalData.length,
+      data: finalData
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+
+  }
+
+});
 
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
