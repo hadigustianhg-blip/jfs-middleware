@@ -999,11 +999,11 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     form.append("timeType", 1);
 
-    // HAPUS FILTER STATUS CODE
-    // form.append(
-    //   "orderStatusCode",
-    //   "100,106,101,102"
-    // );
+    // FILTER STATUS
+    form.append(
+      "orderStatusCode",
+      "101,102"
+    );
 
     form.append("startPickTime", "");
 
@@ -1058,7 +1058,7 @@ app.get("/jfs-oms-full", async (req, res) => {
     const finalData = [];
 
     // ===============================
-    // 2. LOOP DETAIL NON SENSOR
+    // 2. LOOP DETAIL
     // ===============================
 
     for (const item of records) {
@@ -1102,6 +1102,9 @@ app.get("/jfs-oms-full", async (req, res) => {
 
         const d =
           detailResponse.data?.data || {};
+
+        // SKIP DATA KOSONG
+        if (!d.waybillId) continue;
 
         finalData.push({
 
@@ -1156,16 +1159,16 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     }
 
-// ===============================
-// RETURN
-// ===============================
+    // ===============================
+    // RETURN
+    // ===============================
 
-res.json({
-  success: true,
-  total: finalData.length,
-  data: finalData
-});
-    
+    res.json({
+      success: true,
+      total: finalData.length,
+      data: finalData
+    });
+
   } catch (err) {
 
     console.log(
