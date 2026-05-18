@@ -984,143 +984,167 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     let allRecords = [];
 
+    // ================= LOOP PAGE =================
 
-    // ================= LOOP STATUS =================
+    do {
 
-      do {
+      const form = new FormData();
 
-        const form = new FormData();
+      // ================= PAYLOAD =================
 
-        // ================= PAYLOAD =================
+      form.append(
+        "current",
+        currentPage
+      );
 
-        form.append(
-          "current",
-          currentPage
-        );
+      form.append(
+        "size",
+        100
+      );
 
-        form.append(
-          "size",
-          100
-        );
+      form.append(
+        "startInputTime",
+        "2026-05-12 00:00:00"
+      );
 
-        form.append(
-          "startInputTime",
-          "2026-05-12 00:00:00"
-        );
+      form.append(
+        "endInputTime",
+        moment().format(
+          "YYYY-MM-DD HH:mm:ss"
+        )
+      );
 
-        form.append(
-          "endInputTime",
-          moment().format(
-            "YYYY-MM-DD HH:mm:ss"
-          )
-        );
+      // ================= TIME TYPE =================
+      // 2 = sprinter / assign kurir
+      // ============================================
 
-        form.append(
-          "timeType",
-          "2"
-        );
+      form.append(
+        "timeType",
+        "2"
+      );
 
-        // ================= STATUS =================
+      // ================= PICK TIME =================
 
-        form.append(
-          "startPickTime",
-          ""
-        );
+      form.append(
+        "startPickTime",
+        ""
+      );
 
-        form.append(
-          "endPickTime",
-          ""
-        );
+      form.append(
+        "endPickTime",
+        ""
+      );
 
-        // ================= REQUEST =================
+      // ================= REQUEST =================
 
-        const response = await axios.post(
+      const response = await axios.post(
 
-          "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
+        "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
 
-          form,
+        form,
 
-          {
+        {
 
-            headers: {
+          headers: {
 
-              ...form.getHeaders(),
+            ...form.getHeaders(),
 
-              accept:
-                "application/json, text/plain, */*",
+            accept:
+              "application/json, text/plain, */*",
 
-              authtoken:
-                AUTH_TOKEN,
+            authtoken:
+              AUTH_TOKEN,
 
-              lang:
-                "ID",
+            lang:
+              "ID",
 
-              langtype:
-                "ID",
+            langtype:
+              "ID",
 
-              origin:
-                "https://jfs.jtcargo.co.id",
+            origin:
+              "https://jfs.jtcargo.co.id",
 
-              referer:
-                "https://jfs.jtcargo.co.id/",
+            referer:
+              "https://jfs.jtcargo.co.id/",
 
-              routename:
-                "orderScheduling",
+            routename:
+              "orderScheduling",
 
-              "user-agent":
-                "Mozilla/5.0"
-
-            }
+            "user-agent":
+              "Mozilla/5.0"
 
           }
 
-        );
+        }
 
-        // ================= RECORD =================
-
-        const records =
-          response.data?.data?.records || [];
-
-        // ================= TOTAL PAGE =================
-
-        totalPages =
-          response.data?.data?.pages || 1;
-
-        // ================= DEBUG =================
-
-        console.log(
-          `STATUS ${statusCode} PAGE ${currentPage}/${totalPages}`
-        );
-
-        console.log(
-          records.map(x => ({
-            waybill:
-              x.waybillId,
-            status:
-              x.orderStatusName,
-            code:
-              x.orderStatusCode
-          }))
-        );
-
-        // ================= GABUNG =================
-
-        allRecords =
-          allRecords.concat(records);
-
-        // ================= NEXT PAGE =================
-
-        currentPage++;
-
-      } while (
-        currentPage <= totalPages
       );
 
-    }
+      // ================= RECORD =================
+
+      const records =
+        response.data?.data?.records || [];
+
+      // ================= TOTAL PAGE =================
+
+      totalPages =
+        response.data?.data?.pages || 1;
+
+      // ================= DEBUG =================
+
+      console.log(
+        `PAGE ${currentPage}/${totalPages}`
+      );
+
+      console.log(
+        records.map(x => ({
+          waybill:
+            x.waybillId,
+          status:
+            x.orderStatusName,
+          code:
+            x.orderStatusCode,
+          picker:
+            x.pickStaffName,
+          assign:
+            x.dispatchStaffTime
+        }))
+      );
+
+      // ================= GABUNG =================
+
+      allRecords =
+        allRecords.concat(records);
+
+      // ================= NEXT PAGE =================
+
+      currentPage++;
+
+    } while (
+      currentPage <= totalPages
+    );
+
+    // ================= FILTER STATUS =================
+
+    const filtered =
+      allRecords.filter(x => {
+
+        return [
+
+          100,
+          101,
+          102,
+          105,
+          106
+
+        ].includes(
+          x.orderStatusCode
+        );
+
+      });
 
     // ================= FORMAT DATA =================
 
-    const finalData = allRecords.map(x => ({
+    const finalData = filtered.map(x => ({
 
       // ================= BASIC =================
 
