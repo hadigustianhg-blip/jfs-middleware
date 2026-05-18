@@ -987,12 +987,6 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     // ================= LOOP STATUS =================
 
-    for (const statusCode of statusList) {
-
-      currentPage = 1;
-
-      totalPages = 1;
-
       do {
 
         const form = new FormData();
