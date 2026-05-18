@@ -992,13 +992,15 @@ app.get("/jfs-oms-full", async (req, res) => {
 
       const form = new FormData();
 
+      // ================= PAYLOAD =================
+
       form.append("current", currentPage);
 
       form.append("size", pageSize);
 
       form.append(
         "startInputTime",
-        "2026-05-11 00:00:00"
+        "2026-05-12 00:00:00"
       );
 
       form.append(
@@ -1006,7 +1008,19 @@ app.get("/jfs-oms-full", async (req, res) => {
         moment().format("YYYY-MM-DD HH:mm:ss")
       );
 
-      form.append("timeType", 1);
+      form.append("timeType", "1");
+
+      // STATUS OMS
+      // 100 = menunggu dispatch
+      // 101 = outlet telah dijadwalkan
+      // 102 = kurir telah dijadwalkan
+      // 105 = pickup gagal
+      // 106 = pickup sukses
+
+      form.append(
+        "orderStatusCode",
+        "100,106,101,102,105"
+      );
 
       form.append("startPickTime", "");
 
@@ -1061,14 +1075,16 @@ app.get("/jfs-oms-full", async (req, res) => {
       const records =
         response.data?.data?.records || [];
 
-      // ================= GABUNG =================
-
-      allRecords =
-        allRecords.concat(records);
+      // ================= DEBUG =================
 
       console.log(
         `PAGE ${currentPage} = ${records.length}`
       );
+
+      // ================= GABUNG =================
+
+      allRecords =
+        allRecords.concat(records);
 
       // ================= STOP =================
 
@@ -1084,28 +1100,37 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     }
 
-    // ================= FORMAT =================
+    // ================= FORMAT DATA =================
 
     const finalData = allRecords.map(x => ({
 
-      // ================= ID OMS
-      // PENTING UNTUK BUKA SENSOR HP
-      // =================
+      // ================= BASIC =================
 
       id:
         x.id || "",
 
-      marketplace:
-        x.orderSourceName || "",
-
       waybill:
         x.waybillId || "",
+
+      marketplace:
+        x.orderSourceName || "",
 
       status:
         x.orderStatusName || "",
 
+      statusCode:
+        x.orderStatusCode || "",
+
+      // ================= PICKUP =================
+
+      pickNetwork:
+        x.pickNetworkName || "",
+
       picker:
         x.pickStaffName || "",
+
+      assignTime:
+        x.dispatchStaffTime || "",
 
       bestPickStart:
         x.bestPickTimeStart || "",
@@ -1113,8 +1138,16 @@ app.get("/jfs-oms-full", async (req, res) => {
       bestPickEnd:
         x.bestPickTimeEnd || "",
 
-      layanan:
-        x.sendName || "",
+      latestPick:
+        x.latestPickTime || "",
+
+      pickFailReason:
+        x.pickFailReason || "",
+
+      pickFailTime:
+        x.pickFailTime || "",
+
+      // ================= PENGIRIM =================
 
       pengirim:
         x.senderName || "",
@@ -1125,32 +1158,116 @@ app.get("/jfs-oms-full", async (req, res) => {
       alamat:
         x.senderDetailedAddress || "",
 
+      kotaPengirim:
+        x.senderCityName || "",
+
+      provinsiPengirim:
+        x.senderProvinceName || "",
+
+      // ================= PENERIMA =================
+
+      penerima:
+        x.receiverName || "",
+
+      noHpPenerima:
+        x.receiverMobilePhone || "",
+
+      alamatPenerima:
+        x.receiverDetailedAddress || "",
+
       kotaTujuan:
         x.receiverCityName || "",
+
+      provinsiTujuan:
+        x.receiverProvinceName || "",
+
+      // ================= BARANG =================
 
       barang:
         x.goodsName || "",
 
+      kategoriBarang:
+        x.goodsTypeName || "",
+
       berat:
         x.packageTotalWeight || 0,
+
+      beratVolume:
+        x.packageChargeWeight || 0,
 
       qty:
         x.packageNumber || 0,
 
-      orderTime:
-        x.customerOrderTime || "",
+      panjang:
+        x.packageLength || 0,
 
-      pickTime:
-        x.pickTime || "",
+      lebar:
+        x.packageWide || 0,
 
-      assignTime:
-        x.dispatchStaffTime || "",
+      tinggi:
+        x.packageHigh || 0,
+
+      volume:
+        x.packateVolume || 0,
+
+      // ================= PAYMENT =================
+
+      payment:
+        x.paymentModeName || "",
+
+      cod:
+        x.codNeed || 0,
+
+      codValue:
+        x.codMoney || "0",
+
+      goodsValue:
+        x.goodsValue || 0,
+
+      totalExpenses:
+        x.totalExpenses || 0,
+
+      // ================= SERVICE =================
+
+      layanan:
+        x.sendName || "",
 
       express:
         x.expressTypeName || "",
 
-      payment:
-        x.paymentModeName || ""
+      shippingMethod:
+        x.shippingMethodCode || "",
+
+      // ================= TIME =================
+
+      inputTime:
+        x.inputTime || "",
+
+      orderTime:
+        x.customerOrderTime || "",
+
+      updateTime:
+        x.updateTime || "",
+
+      pickTime:
+        x.pickTime || "",
+
+      // ================= LAIN =================
+
+      customerCode:
+        x.customerCode || "",
+
+      customerOrderId:
+        x.customerOrderId || "",
+
+      terminalDispatch:
+        x.terminalDispatchCode || "",
+
+      externalSorting:
+        x.externalSortingCode || "",
+
+      dispatchReason:
+        x.dispatchNetworkReason || ""
 
     }));
 
