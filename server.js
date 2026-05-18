@@ -984,150 +984,161 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     let allRecords = [];
 
-   // ================= LOOP STATUS =================
+    // ================= STATUS LIST =================
 
-for (const statusCode of statusList) {
+    const statusList = [
 
-  currentPage = 1;
+      "100", // menunggu dispatch
+      "101", // outlet telah dijadwalkan
+      "102", // sprinter telah dijadwalkan
+      "105", // pickup gagal
+      "106"  // pickup sukses
 
-  totalPages = 1;
+    ];
 
-  do {
+    // ================= LOOP STATUS =================
 
-    const form = new FormData();
+    for (const statusCode of statusList) {
 
-    form.append(
-      "current",
-      currentPage
-    );
+      currentPage = 1;
 
-    form.append(
-      "size",
-      100
-    );
+      totalPages = 1;
 
-    form.append(
-      "startInputTime",
-      "2026-05-12 00:00:00"
-    );
+      do {
 
-    form.append(
-      "endInputTime",
-      moment().format(
-        "YYYY-MM-DD HH:mm:ss"
-      )
-    );
+        const form = new FormData();
 
-    form.append(
-      "timeType",
-      "1"
-    );
+        // ================= PAYLOAD =================
 
-    // ================= STATUS =================
+        form.append(
+          "current",
+          currentPage
+        );
 
-    form.append(
-      "orderStatusCode",
-      statusCode
-    );
+        form.append(
+          "size",
+          100
+        );
 
-    form.append(
-      "startPickTime",
-      ""
-    );
+        form.append(
+          "startInputTime",
+          "2026-05-12 00:00:00"
+        );
 
-    form.append(
-      "endPickTime",
-      ""
-    );
+        form.append(
+          "endInputTime",
+          moment().format(
+            "YYYY-MM-DD HH:mm:ss"
+          )
+        );
 
-    // ================= REQUEST =================
+        form.append(
+          "timeType",
+          "1"
+        );
 
-    const response = await axios.post(
+        // ================= STATUS =================
 
-      "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
+        form.append(
+          "orderStatusCode",
+          statusCode
+        );
 
-      form,
+        form.append(
+          "startPickTime",
+          ""
+        );
 
-      {
+        form.append(
+          "endPickTime",
+          ""
+        );
 
-        headers: {
+        // ================= REQUEST =================
 
-          ...form.getHeaders(),
+        const response = await axios.post(
 
-          accept:
-            "application/json, text/plain, */*",
+          "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
 
-          authtoken:
-            AUTH_TOKEN,
+          form,
 
-          lang:
-            "ID",
+          {
 
-          langtype:
-            "ID",
+            headers: {
 
-          origin:
-            "https://jfs.jtcargo.co.id",
+              ...form.getHeaders(),
 
-          referer:
-            "https://jfs.jtcargo.co.id/",
+              accept:
+                "application/json, text/plain, */*",
 
-          routename:
-            "orderScheduling",
+              authtoken:
+                AUTH_TOKEN,
 
-          "user-agent":
-            "Mozilla/5.0"
+              lang:
+                "ID",
 
-        }
+              langtype:
+                "ID",
 
-      }
+              origin:
+                "https://jfs.jtcargo.co.id",
 
-    );
+              referer:
+                "https://jfs.jtcargo.co.id/",
 
-    const records =
-      response.data?.data?.records || [];
+              routename:
+                "orderScheduling",
 
-    totalPages =
-      response.data?.data?.pages || 1;
+              "user-agent":
+                "Mozilla/5.0"
 
-    console.log(
-      `STATUS ${statusCode} PAGE ${currentPage}/${totalPages}`
-    );
+            }
 
-    console.log(
-      records.map(x => ({
-        waybill:
-          x.waybillId,
-        status:
-          x.orderStatusName,
-        code:
-          x.orderStatusCode
-      }))
-    );
+          }
 
-    allRecords =
-      allRecords.concat(records);
+        );
 
-    currentPage++;
+        // ================= RECORD =================
 
-  } while (
-    currentPage <= totalPages
-  );
+        const records =
+          response.data?.data?.records || [];
 
-}
+        // ================= TOTAL PAGE =================
 
-      // ================= GABUNG =================
+        totalPages =
+          response.data?.data?.pages || 1;
 
-      allRecords =
-        allRecords.concat(records);
+        // ================= DEBUG =================
 
-      // ================= NEXT PAGE =================
+        console.log(
+          `STATUS ${statusCode} PAGE ${currentPage}/${totalPages}`
+        );
 
-      currentPage++;
+        console.log(
+          records.map(x => ({
+            waybill:
+              x.waybillId,
+            status:
+              x.orderStatusName,
+            code:
+              x.orderStatusCode
+          }))
+        );
 
-    } while (
-      currentPage <= totalPages
-    );
+        // ================= GABUNG =================
+
+        allRecords =
+          allRecords.concat(records);
+
+        // ================= NEXT PAGE =================
+
+        currentPage++;
+
+      } while (
+        currentPage <= totalPages
+      );
+
+    }
 
     // ================= FORMAT DATA =================
 
