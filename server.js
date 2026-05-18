@@ -1034,7 +1034,7 @@ app.get("/jfs-oms-full", async (req, res) => {
 
         form.append(
           "timeType",
-          "1"
+          "2"
         );
 
         // ================= STATUS =================
