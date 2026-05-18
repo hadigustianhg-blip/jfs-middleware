@@ -980,23 +980,27 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     let currentPage = 1;
 
-    const pageSize = 100;
+    let totalPages = 1;
 
     let allRecords = [];
 
-    let hasMore = true;
-
     // ================= LOOP PAGE =================
 
-    while (hasMore) {
+    do {
 
       const form = new FormData();
 
       // ================= PAYLOAD =================
 
-      form.append("current", currentPage);
+      form.append(
+        "current",
+        currentPage
+      );
 
-      form.append("size", pageSize);
+      form.append(
+        "size",
+        100
+      );
 
       form.append(
         "startInputTime",
@@ -1005,26 +1009,38 @@ app.get("/jfs-oms-full", async (req, res) => {
 
       form.append(
         "endInputTime",
-        moment().format("YYYY-MM-DD HH:mm:ss")
+        moment().format(
+          "YYYY-MM-DD HH:mm:ss"
+        )
       );
 
-      form.append("timeType", "1");
+      form.append(
+        "timeType",
+        "1"
+      );
 
-      // STATUS OMS
+      // ================= STATUS OMS =================
       // 100 = menunggu dispatch
       // 101 = outlet telah dijadwalkan
-      // 102 = kurir telah dijadwalkan
+      // 102 = sprinter telah dijadwalkan
       // 105 = pickup gagal
       // 106 = pickup sukses
+      // =============================================
 
       form.append(
         "orderStatusCode",
-        "100,106,101,102,105"
+        "100,101,102,105,106"
       );
 
-      form.append("startPickTime", "");
+      form.append(
+        "startPickTime",
+        ""
+      );
 
-      form.append("endPickTime", "");
+      form.append(
+        "endPickTime",
+        ""
+      );
 
       // ================= REQUEST =================
 
@@ -1075,10 +1091,26 @@ app.get("/jfs-oms-full", async (req, res) => {
       const records =
         response.data?.data?.records || [];
 
+      // ================= TOTAL PAGE =================
+
+      totalPages =
+        response.data?.data?.pages || 1;
+
       // ================= DEBUG =================
 
       console.log(
-        `PAGE ${currentPage} = ${records.length}`
+        `PAGE ${currentPage}/${totalPages}`
+      );
+
+      console.log(
+        records.map(x => ({
+          waybill:
+            x.waybillId,
+          status:
+            x.orderStatusName,
+          code:
+            x.orderStatusCode
+        }))
       );
 
       // ================= GABUNG =================
@@ -1086,19 +1118,13 @@ app.get("/jfs-oms-full", async (req, res) => {
       allRecords =
         allRecords.concat(records);
 
-      // ================= STOP =================
+      // ================= NEXT PAGE =================
 
-      if (records.length < pageSize) {
+      currentPage++;
 
-        hasMore = false;
-
-      } else {
-
-        currentPage++;
-
-      }
-
-    }
+    } while (
+      currentPage <= totalPages
+    );
 
     // ================= FORMAT DATA =================
 
