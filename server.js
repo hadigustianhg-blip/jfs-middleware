@@ -984,17 +984,6 @@ app.get("/jfs-oms-full", async (req, res) => {
 
     let allRecords = [];
 
-    // ================= STATUS LIST =================
-
-    const statusList = [
-
-      "100", // menunggu dispatch
-      "101", // outlet telah dijadwalkan
-      "102", // sprinter telah dijadwalkan
-      "105", // pickup gagal
-      "106"  // pickup sukses
-
-    ];
 
     // ================= LOOP STATUS =================
 
@@ -1038,11 +1027,6 @@ app.get("/jfs-oms-full", async (req, res) => {
         );
 
         // ================= STATUS =================
-
-        form.append(
-          "orderStatusCode",
-          statusCode
-        );
 
         form.append(
           "startPickTime",
