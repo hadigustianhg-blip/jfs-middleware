@@ -1733,6 +1733,339 @@ app.get("/inventaris-engine", async (req, res) => {
 
 });
 
+// ================= FULL OPS CHECK =================
+app.get("/jfs-full-ops-check", async (req, res) => {
+
+  try {
+
+    // =========================
+    // CHECK TOKEN
+    // =========================
+    if (!AUTH_TOKEN) {
+
+      return res.status(400).json({
+        error: "Token kosong"
+      });
+
+    }
+
+    // =========================
+    // DATE WIB
+    // =========================
+    const date =
+      req.query.date ||
+      moment()
+        .tz("Asia/Jakarta")
+        .format("YYYY-MM-DD");
+
+    // =========================
+    // STEP 1
+    // GET CHECK CODE
+    // =========================
+    let checkRecords = [];
+
+    let current = 1;
+
+    let hasMore = true;
+
+    while (hasMore) {
+
+      const payload = {
+
+        current: current,
+
+        size: 100,
+
+        checkNetworkCode: "SUM001A",
+
+        status: 3,
+
+        checkCodes: [],
+
+        countryId: "1",
+
+        searchType: 1,
+
+        startScanTime:
+          `${date} 00:00:00`,
+
+        endScanTime:
+          `${date} 23:59:59`
+
+      };
+
+      const response = await axios.post(
+
+        "https://jfsgw.jtcargo.co.id/operatingplatform/opsCheck/queryOpsCheckForPage",
+
+        payload,
+
+        {
+
+          headers: {
+
+            "Accept":
+              "application/json, text/plain, */*",
+
+            "Content-Type":
+              "application/json;charset=UTF-8",
+
+            "Authtoken":
+              AUTH_TOKEN,
+
+            "Lang":
+              "ID",
+
+            "Langtype":
+              "ID",
+
+            "Origin":
+              "https://jfs.jtcargo.co.id",
+
+            "Referer":
+              "https://jfs.jtcargo.co.id/",
+
+            "Routename":
+              "opsCheckPage",
+
+            "User-Agent":
+              "Mozilla/5.0"
+
+          }
+
+        }
+
+      );
+
+      const records =
+        response?.data?.data?.records || [];
+
+      console.log(
+        "CHECK PAGE:",
+        current,
+        records.length
+      );
+
+      checkRecords =
+        checkRecords.concat(records);
+
+      if (!records.length || records.length < 100) {
+
+        hasMore = false;
+
+      } else {
+
+        current++;
+
+      }
+
+      await new Promise(r =>
+        setTimeout(r, 300)
+      );
+
+    }
+
+    // =========================
+    // AMBIL CHECK CODE
+    // =========================
+    const checkCodes =
+      checkRecords.map(
+        item => item.checkCode
+      );
+
+    console.log(
+      "TOTAL CHECK CODE:",
+      checkCodes.length
+    );
+
+    // =========================
+    // STEP 2
+    // LOOP DETAIL
+    // =========================
+    let finalData = [];
+
+    for (const code of checkCodes) {
+
+      try {
+
+        const detailPayload = {
+
+          current: 1,
+
+          size: 100,
+
+          checkCode: code,
+
+          countryId: "1"
+
+        };
+
+        const detailResponse =
+          await axios.post(
+
+            "https://jfsgw.jtcargo.co.id/operatingplatform/opsCheck/queryOpsCheckDetailForPage",
+
+            detailPayload,
+
+            {
+
+              headers: {
+
+                "Accept":
+                  "application/json, text/plain, */*",
+
+                "Content-Type":
+                  "application/json;charset=UTF-8",
+
+                "Authtoken":
+                  AUTH_TOKEN,
+
+                "Lang":
+                  "ID",
+
+                "Langtype":
+                  "ID",
+
+                "Origin":
+                  "https://jfs.jtcargo.co.id",
+
+                "Referer":
+                  "https://jfs.jtcargo.co.id/",
+
+                "Routename":
+                  "opsCheckPage",
+
+                "User-Agent":
+                  "Mozilla/5.0"
+
+              }
+
+            }
+
+          );
+
+        const detailRecords =
+          detailResponse?.data?.data?.records || [];
+
+        console.log(
+          "DETAIL:",
+          code,
+          detailRecords.length
+        );
+
+        // =========================
+        // FILTER DATA
+        // =========================
+        const clean =
+          detailRecords.map(item => ({
+
+            billCode:
+              item.billCode || "",
+
+            waybillNo:
+              item.waybillNo || "",
+
+            checkCode:
+              item.checkCode || "",
+
+            checkUser:
+              item.checkUser || "",
+
+            checkUserCode:
+              item.checkUserCode || "",
+
+            checkTime:
+              item.checkTime || "",
+
+            inStockTime:
+              item.inStockTime || "",
+
+            dispatchNetworkCode:
+              item.dispatchNetworkCode || "",
+
+            codMoney:
+              item.codMoney || 0,
+
+            dfodCodMoney:
+              item.dfodCodMoney || 0,
+
+            secondLevelTypeName:
+              item.secondLevelTypeName || "",
+
+            stockTime:
+              item.stockTime || "",
+
+            deliverScantime:
+              item.deliverScantime || "",
+
+            sendDeliverUser:
+              item.sendDeliverUser || "",
+
+            planSignTime:
+              item.planSignTime || "",
+
+            rebackStatus:
+              item.rebackStatus || 0
+
+          }));
+
+        finalData =
+          finalData.concat(clean);
+
+      } catch (err) {
+
+        console.log(
+          "DETAIL ERROR:",
+          code,
+          err.message
+        );
+
+      }
+
+      // anti limit
+      await new Promise(r =>
+        setTimeout(r, 200)
+      );
+
+    }
+
+    // =========================
+    // RESPONSE
+    // =========================
+    res.json({
+
+      success: true,
+
+      total:
+        finalData.length,
+
+      data:
+        finalData
+
+    });
+
+  } catch (error) {
+
+    console.log(
+      "FULL OPS ERROR:",
+      error.response?.data ||
+      error.message
+    );
+
+    res.status(500).json({
+
+      success: false,
+
+      error:
+        error.response?.data ||
+        error.message
+
+    });
+
+  }
+
+});
+
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
