@@ -1474,6 +1474,265 @@ app.get("/jfs-detail-full", async (req, res) => {
 
 });
 
+// ================= INVENTARIS ENGINE =================
+app.get("/inventaris-engine", async (req, res) => {
+
+  try {
+
+    // =========================
+    // VALIDASI TOKEN
+    // =========================
+    if (!AUTH_TOKEN) {
+
+      return res.status(400).json({
+        error: "AUTH TOKEN kosong"
+      });
+
+    }
+
+    let allRecords = [];
+
+    let current = 1;
+
+    let hasMore = true;
+
+    const maxPage = 20;
+
+    while (hasMore && current <= maxPage) {
+
+      // =========================
+      // PAYLOAD
+      // =========================
+      const payload = {
+
+        beginDate: "2026-03-28 00:00:00",
+
+        endDate: "2026-05-27 23:59:59",
+
+        billCode: "",
+
+        codNeed: "",
+
+        convertResultFromDictionCode:
+          "is_receiver_pay|124,isProblemPiece|124,cod_need|124,is_refund|124",
+
+        convertResultFromDictionOricCode: "",
+
+        countryId: "1",
+
+        current: current,
+
+        customerCode: "",
+
+        expressTypeCode: "",
+
+        invOverTm: "",
+
+        isOverDate: "",
+
+        isRefund: "",
+
+        operateSiteType: "all",
+
+        paginationSearchType: "list",
+
+        queryFlag: "2",
+
+        scanSiteCode: "SUM001A",
+
+        scanSiteCodeId: 2015,
+
+        scanSiteCodeName: "SUM001A",
+
+        scanSiteCodeTypeId: 336,
+
+        shipHour: "",
+
+        size: 500,
+
+        sqlCode: "realtime_inv_man_dtl"
+
+      };
+
+      // =========================
+      // REQUEST
+      // =========================
+      const response = await axios.post(
+
+        "https://jfsgw.jtcargo.co.id/jfs-report-leader/report/dynamicReport/findByPagination?sqlCode=realtime_inv_man_dtl&dcr_key=57b048fb-bc8c-4d24-982b-a750b7ce8693",
+
+        payload,
+
+        {
+
+          headers: {
+
+            "Accept":
+              "application/json, text/plain, */*",
+
+            "Content-Type":
+              "application/json;charset=UTF-8",
+
+            "Authtoken":
+              AUTH_TOKEN,
+
+            "Lang":
+              "ID",
+
+            "Langtype":
+              "ID",
+
+            "Origin":
+              "https://jfs.jtcargo.co.id",
+
+            "Referer":
+              "https://jfs.jtcargo.co.id/",
+
+            "Routename":
+              "Bd-theme-4d718ae8-fa85-4edc-b98c-1a0f75e5f9f3|businessIndicatorIndex",
+
+            "User-Agent":
+              "Mozilla/5.0"
+
+          }
+
+        }
+
+      );
+
+      const records =
+        response?.data?.data?.records || [];
+
+      console.log(
+        "PAGE:",
+        current,
+        "TOTAL:",
+        records.length
+      );
+
+      allRecords =
+        allRecords.concat(records);
+
+      if (records.length < 500) {
+
+        hasMore = false;
+
+      } else {
+
+        current++;
+
+      }
+
+      await new Promise(r =>
+        setTimeout(r, 300)
+      );
+
+    }
+
+    // =========================
+    // FILTER DATA
+    // =========================
+    const clean =
+      allRecords.map(item => ({
+
+        billcode:
+          item.billcode || "",
+
+        goods_name:
+          item.goods_name || "",
+
+        weight:
+          item.weight || "",
+
+        volume:
+          item.volume || "",
+
+        inventoryHours:
+          item.inventoryHours || 0,
+
+        waybill_status:
+          item.waybill_status || "",
+
+        destination_site_name:
+          item.destination_site_name || "",
+
+        SEND_NEXTSTATION:
+          item.SEND_NEXTSTATION || "",
+
+        take_site_name:
+          item.take_site_name || "",
+
+        operate_site_name:
+          item.operate_site_name || "",
+
+        express_type_name:
+          item.express_type_name || "",
+
+        cod_need:
+          item.cod_need || "",
+
+        isProblemPiece:
+          item.isProblemPiece || "",
+
+        second_level_type_name:
+          item.second_level_type_name || "",
+
+        abnormal_remark:
+          item.abnormal_remark || "",
+
+        customer_code:
+          item.customer_code || "",
+
+        name:
+          item.name || "",
+
+        take_scantime:
+          item.take_scantime || "",
+
+        operate_scantime_1:
+          item.operate_scantime_1 || "",
+
+        operate_scantime_2:
+          item.operate_scantime_2 || ""
+
+      }));
+
+    // =========================
+    // RESPONSE
+    // =========================
+    res.json({
+
+      success: true,
+
+      total:
+        clean.length,
+
+      data:
+        clean
+
+    });
+
+  } catch (error) {
+
+    console.error(
+      "ERROR INVENTARIS:",
+      error.response?.data || error.message
+    );
+
+    res.status(500).json({
+
+      error:
+        "Gagal ambil data inventaris",
+
+      detail:
+        error.response?.data || error.message
+
+    });
+
+  }
+
+});
+
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
