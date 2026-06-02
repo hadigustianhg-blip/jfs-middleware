@@ -971,6 +971,323 @@ app.get("/jfs-sensitive", async (req, res) => {
 
 });
 
+function getOmsHeaders(route) {
+  return {
+    Authtoken: AUTH_TOKEN,
+
+    Lang: "ID",
+    Langtype: "ID",
+
+    Routename: route,
+
+    Origin: "https://jfs.jtcargo.co.id",
+    Referer: "https://jfs.jtcargo.co.id/",
+
+    Accept: "application/json, text/plain, */*",
+
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  };
+}
+// ================= OMS ORDER SYNC =================
+app.get("/jfs-order-sync", async (req, res) => {
+
+  try {
+
+    if (!AUTH_TOKEN) {
+      return res.status(400).json({
+        error: "Token kosong"
+      });
+    }
+
+    const moment =
+      require("moment-timezone");
+
+    const startTime =
+      req.query.start ||
+      moment()
+        .tz("Asia/Jakarta")
+        .subtract(1, "day")
+        .format("YYYY-MM-DD HH:mm:ss");
+
+    const endTime =
+      req.query.end ||
+      moment()
+        .tz("Asia/Jakarta")
+        .format("YYYY-MM-DD HH:mm:ss");
+
+    let current = 1;
+    let hasMore = true;
+
+    let allOrders = [];
+
+    while (hasMore) {
+
+      const form =
+        new FormData();
+
+      form.append(
+        "current",
+        current
+      );
+
+      form.append(
+        "size",
+        100
+      );
+
+      form.append(
+        "startInputTime",
+        startTime
+      );
+
+      form.append(
+        "endInputTime",
+        endTime
+      );
+
+      form.append(
+        "timeType",
+        1
+      );
+
+      form.append(
+        "orderStatusCode",
+        "100,106,101,102"
+      );
+
+      const response =
+        await axios.post(
+
+          "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
+
+          form,
+
+          {
+            headers: {
+              ...form.getHeaders(),
+              ...getOmsHeaders(
+                "orderScheduling"
+              )
+            }
+          }
+        );
+
+      const records =
+        response?.data?.data?.records || [];
+
+      console.log(
+        "OMS PAGE:",
+        current,
+        records.length
+      );
+
+      allOrders =
+        allOrders.concat(records);
+
+      if (
+        !records.length ||
+        records.length < 100
+      ) {
+        hasMore = false;
+      } else {
+        current++;
+      }
+
+      await new Promise(r =>
+        setTimeout(r, 300)
+      );
+    }
+
+    console.log(
+      "TOTAL ORDER:",
+      allOrders.length
+    );
+
+    const result = [];
+
+    for (const item of allOrders) {
+
+      try {
+
+        const detail =
+          await axios.get(
+
+            "https://jfsgw.jtcargo.co.id/customerplatform/omsOrder/detailDispatchByLog",
+
+            {
+              params: {
+                id: item.id
+              },
+
+              headers: {
+                ...getOmsHeaders(
+                  "orderScheduling"
+                )
+              }
+            }
+          );
+
+        const d =
+          detail?.data?.data || {};
+
+        result.push({
+
+          id:
+            d.id || "",
+
+          waybillId:
+            d.waybillId || "",
+
+          orderSource:
+            d.orderSourceName || "",
+
+          customer:
+            d.customerName || "",
+
+          status:
+            d.orderStatusName || "",
+
+          senderName:
+            d.senderName || "",
+
+          senderPhone:
+            d.senderMobilePhone || "",
+
+          senderProvince:
+            d.senderProvinceName || "",
+
+          senderCity:
+            d.senderCityName || "",
+
+          senderArea:
+            d.senderAreaName || "",
+
+          senderAddress:
+            d.senderDetailedAddress || "",
+
+          receiverName:
+            d.receiverName || "",
+
+          receiverPhone:
+            d.receiverMobilePhone || "",
+
+          receiverProvince:
+            d.receiverProvinceName || "",
+
+          receiverCity:
+            d.receiverCityName || "",
+
+          receiverArea:
+            d.receiverAreaName || "",
+
+          receiverAddress:
+            d.receiverDetailedAddress || "",
+
+          goodsName:
+            d.goodsName || "",
+
+          goodsType:
+            d.goodsTypeName || "",
+
+          weight:
+            d.packageTotalWeight || 0,
+
+          packageNumber:
+            d.packageNumber || 0,
+
+          expressType:
+            d.expressTypeName || "",
+
+          paymentMode:
+            d.paymentModeName || "",
+
+          pickNetwork:
+            d.pickNetworkName || "",
+
+          pickNetworkCode:
+            d.pickNetworkCode || "",
+
+          proxyArea:
+            d.proxyAreaName || "",
+
+          proxyAreaCode:
+            d.proxyAreaCode || "",
+
+          inputTime:
+            d.inputTime || "",
+
+          dispatchNetworkTime:
+            d.dispatchNetworkTime || "",
+
+          syncTime:
+            moment()
+              .tz("Asia/Jakarta")
+              .format(
+                "YYYY-MM-DD HH:mm:ss"
+              )
+
+        });
+
+      } catch (err) {
+
+        console.log(
+          "DETAIL ERROR:",
+          item.id
+        );
+
+      }
+
+      await new Promise(r =>
+        setTimeout(r, 200)
+      );
+    }
+
+    res.json({
+
+      success: true,
+
+      total:
+        result.length,
+
+      startTime,
+
+      endTime,
+
+      syncTime:
+        moment()
+          .tz("Asia/Jakarta")
+          .format(
+            "YYYY-MM-DD HH:mm:ss"
+          ),
+
+      data:
+        result
+
+    });
+
+  } catch (error) {
+
+    console.error(
+      "OMS SYNC ERROR:",
+      error.response?.data ||
+      error.message
+    );
+
+    res.status(500).json({
+
+      success: false,
+
+      error:
+        error.response?.data ||
+        error.message
+
+    });
+
+  }
+
+});
+
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
