@@ -1095,7 +1095,7 @@ app.get("/jfs-order-sync", async (req, res) => {
       }
 
       await new Promise(r =>
-        setTimeout(r, 300)
+        setTimeout(r, 1500)
       );
     }
 
