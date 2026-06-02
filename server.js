@@ -1000,9 +1000,6 @@ app.get("/jfs-order-sync", async (req, res) => {
       });
     }
 
-    const moment =
-      require("moment-timezone");
-
     const startTime =
       req.query.start ||
       moment()
@@ -1023,63 +1020,26 @@ app.get("/jfs-order-sync", async (req, res) => {
 
     while (hasMore) {
 
-      const form =
-        new FormData();
+      const form = new FormData();
 
-      form.append(
-        "current",
-        current
-      );
+      form.append("current", current);
+      form.append("size", 100);
+      form.append("startInputTime", startTime);
+      form.append("endInputTime", endTime);
+      form.append("timeType", 1);
+      form.append("orderStatusCode", "100,106,101,102");
 
-      form.append(
-        "size",
-        100
-      );
-
-      form.append(
-        "startInputTime",
-        startTime
-      );
-
-      form.append(
-        "endInputTime",
-        endTime
-      );
-
-      form.append(
-        "timeType",
-        1
-      );
-
-      form.append(
-        "orderStatusCode",
-        "100,106,101,102"
-      );
-
-      const response =
-        await axios.post(
-
-          "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
-
-          form,
-
-          {
-            headers: {
-              ...form.getHeaders(),
-              ...getOmsHeaders(
-                "orderScheduling"
-              )
-            }
+      const response = await axios.post(
+        "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
+        form,
+        {
+          headers: {
+            ...form.getHeaders(),
+            ...getOmsHeaders("orderScheduling")
           }
-        );
-      
-        console.log(
-        JSON.stringify(
-        response.data,
-        null,
-        2
-      )
-    );
+        }
+      );
+
       const records =
         response?.data?.data?.records || [];
 
@@ -1117,16 +1077,18 @@ app.get("/jfs-order-sync", async (req, res) => {
 
       try {
 
+        console.log(
+          "DETAIL REQUEST:",
+          item.id
+        );
+
         const detail =
           await axios.get(
-
             "https://jfsgw.jtcargo.co.id/customerplatform/omsOrder/detailDispatchByLog",
-
             {
               params: {
                 id: item.id
               },
-
               headers: {
                 ...getOmsHeaders(
                   "orderScheduling"
@@ -1138,92 +1100,49 @@ app.get("/jfs-order-sync", async (req, res) => {
         const d =
           detail?.data?.data || {};
 
+        console.log(
+          "DETAIL SUCCESS:",
+          item.id
+        );
+
         result.push({
 
-          id:
-            d.id || "",
+          id: d.id || "",
+          waybillId: d.waybillId || "",
+          orderSource: d.orderSourceName || "",
+          customer: d.customerName || "",
+          status: d.orderStatusName || "",
 
-          waybillId:
-            d.waybillId || "",
+          senderName: d.senderName || "",
+          senderPhone: d.senderMobilePhone || "",
+          senderProvince: d.senderProvinceName || "",
+          senderCity: d.senderCityName || "",
+          senderArea: d.senderAreaName || "",
+          senderAddress: d.senderDetailedAddress || "",
 
-          orderSource:
-            d.orderSourceName || "",
+          receiverName: d.receiverName || "",
+          receiverPhone: d.receiverMobilePhone || "",
+          receiverProvince: d.receiverProvinceName || "",
+          receiverCity: d.receiverCityName || "",
+          receiverArea: d.receiverAreaName || "",
+          receiverAddress: d.receiverDetailedAddress || "",
 
-          customer:
-            d.customerName || "",
+          goodsName: d.goodsName || "",
+          goodsType: d.goodsTypeName || "",
 
-          status:
-            d.orderStatusName || "",
+          weight: d.packageTotalWeight || 0,
+          packageNumber: d.packageNumber || 0,
 
-          senderName:
-            d.senderName || "",
+          expressType: d.expressTypeName || "",
+          paymentMode: d.paymentModeName || "",
 
-          senderPhone:
-            d.senderMobilePhone || "",
+          pickNetwork: d.pickNetworkName || "",
+          pickNetworkCode: d.pickNetworkCode || "",
 
-          senderProvince:
-            d.senderProvinceName || "",
+          proxyArea: d.proxyAreaName || "",
+          proxyAreaCode: d.proxyAreaCode || "",
 
-          senderCity:
-            d.senderCityName || "",
-
-          senderArea:
-            d.senderAreaName || "",
-
-          senderAddress:
-            d.senderDetailedAddress || "",
-
-          receiverName:
-            d.receiverName || "",
-
-          receiverPhone:
-            d.receiverMobilePhone || "",
-
-          receiverProvince:
-            d.receiverProvinceName || "",
-
-          receiverCity:
-            d.receiverCityName || "",
-
-          receiverArea:
-            d.receiverAreaName || "",
-
-          receiverAddress:
-            d.receiverDetailedAddress || "",
-
-          goodsName:
-            d.goodsName || "",
-
-          goodsType:
-            d.goodsTypeName || "",
-
-          weight:
-            d.packageTotalWeight || 0,
-
-          packageNumber:
-            d.packageNumber || 0,
-
-          expressType:
-            d.expressTypeName || "",
-
-          paymentMode:
-            d.paymentModeName || "",
-
-          pickNetwork:
-            d.pickNetworkName || "",
-
-          pickNetworkCode:
-            d.pickNetworkCode || "",
-
-          proxyArea:
-            d.proxyAreaName || "",
-
-          proxyAreaCode:
-            d.proxyAreaCode || "",
-
-          inputTime:
-            d.inputTime || "",
-
+          inputTime: d.inputTime || "",
           dispatchNetworkTime:
             d.dispatchNetworkTime || "",
 
@@ -1236,42 +1155,42 @@ app.get("/jfs-order-sync", async (req, res) => {
 
         });
 
-      catch (err) {
+      } catch (err) {
 
-  console.log(
-    "DETAIL ERROR:",
-    item.id
-  );
+        console.log(
+          "DETAIL ERROR:",
+          item.id
+        );
 
-  console.log(
-    "STATUS:",
-    err.response?.status
-  );
+        console.log(
+          "STATUS:",
+          err.response?.status
+        );
 
-  console.log(
-    "DATA:",
-    JSON.stringify(
-      err.response?.data,
-      null,
-      2
-    )
-  );
+        console.log(
+          "DATA:",
+          JSON.stringify(
+            err.response?.data,
+            null,
+            2
+          )
+        );
 
-}
+      }
+
       await new Promise(r =>
         setTimeout(r, 1500)
       );
+
     }
 
     res.json({
 
       success: true,
 
-      total:
-        result.length,
+      total: result.length,
 
       startTime,
-
       endTime,
 
       syncTime:
@@ -1281,8 +1200,7 @@ app.get("/jfs-order-sync", async (req, res) => {
             "YYYY-MM-DD HH:mm:ss"
           ),
 
-      data:
-        result
+      data: result
 
     });
 
