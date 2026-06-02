@@ -1001,17 +1001,17 @@ app.get("/jfs-order-sync", async (req, res) => {
     }
 
     const startTime =
-      req.query.start ||
-      moment()
-        .tz("Asia/Jakarta")
-        .subtract(1, "day")
-        .format("YYYY-MM-DD HH:mm:ss");
+  req.query.start ||
+  moment()
+    .tz("Asia/Jakarta")
+    .startOf("month")
+    .format("YYYY-MM-DD HH:mm:ss");
 
-    const endTime =
-      req.query.end ||
-      moment()
-        .tz("Asia/Jakarta")
-        .format("YYYY-MM-DD HH:mm:ss");
+const endTime =
+  req.query.end ||
+  moment()
+    .tz("Asia/Jakarta")
+    .format("YYYY-MM-DD HH:mm:ss");
 
     let current = 1;
     let hasMore = true;
@@ -1022,12 +1022,46 @@ app.get("/jfs-order-sync", async (req, res) => {
 
       const form = new FormData();
 
-      form.append("current", current);
-      form.append("size", 100);
-      form.append("startInputTime", startTime);
-      form.append("endInputTime", endTime);
-      form.append("timeType", 1);
-      form.append("orderStatusCode", "100,106,101,102");
+form.append("current", current);
+
+form.append("size", 100);
+
+form.append(
+  "startInputTime",
+  startTime
+);
+
+form.append(
+  "endInputTime",
+  endTime
+);
+
+form.append(
+  "timeType",
+  1
+);
+
+form.append(
+  "orderStatusCode",
+  "106,100,101,102,105"
+);
+
+form.append(
+  "sendCode",
+  "01"
+);
+
+form.append(
+  "startPickTime",
+  ""
+);
+
+form.append(
+  "endPickTime",
+  ""
+);
+
+      
 
       const response = await axios.post(
         "https://jfsgw.jtcargo.co.id/customerplatform/omsOrderDispatch/page",
