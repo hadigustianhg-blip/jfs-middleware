@@ -1536,8 +1536,6 @@ app.get("/inventaris-engine", async (req, res) => {
 
     const maxPage = 20;
 
-    while (hasMore && current <= maxPage) {
-
       // =========================
       // PAYLOAD
       // =========================
@@ -1845,7 +1843,7 @@ const startDate =
  	 `${startDate} 00:00:00`,
 
 	endScanTime:
- 	 `${endDate} 23:59:59`
+ 	 `${endDate} 23:59:59`,
 
       };
 
