@@ -1072,7 +1072,14 @@ app.get("/jfs-order-sync", async (req, res) => {
             }
           }
         );
-
+      
+        console.log(
+        JSON.stringify(
+        response.data,
+        null,
+        2
+      )
+    );
       const records =
         response?.data?.data?.records || [];
 
@@ -1229,17 +1236,30 @@ app.get("/jfs-order-sync", async (req, res) => {
 
         });
 
-      } catch (err) {
+      catch (err) {
 
-        console.log(
-          "DETAIL ERROR:",
-          item.id
-        );
+  console.log(
+    "DETAIL ERROR:",
+    item.id
+  );
 
-      }
+  console.log(
+    "STATUS:",
+    err.response?.status
+  );
 
+  console.log(
+    "DATA:",
+    JSON.stringify(
+      err.response?.data,
+      null,
+      2
+    )
+  );
+
+}
       await new Promise(r =>
-        setTimeout(r, 200)
+        setTimeout(r, 1500)
       );
     }
 
