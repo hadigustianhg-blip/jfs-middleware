@@ -1530,26 +1530,24 @@ app.get("/inventaris-engine", async (req, res) => {
 
     let allRecords = [];
 
-    let current = 1;
+let current = 1;
 
-    let hasMore = true;
+let hasMore = true;
 
-    const maxPage = 20;
+const maxPage = 20;
 
-      // =========================
-      // PAYLOAD
-      // =========================
+while (hasMore && current <= maxPage) {
 
-	const endDate = moment()
- 	 .tz("Asia/Jakarta")
- 	 .format("YYYY-MM-DD 23:59:59");
+  const endDate = moment()
+    .tz("Asia/Jakarta")
+    .format("YYYY-MM-DD 23:59:59");
 
-	const beginDate = moment()
-  	.tz("Asia/Jakarta")
- 	 .subtract(60, "days")
- 	 .format("YYYY-MM-DD 00:00:00");
+  const beginDate = moment()
+    .tz("Asia/Jakarta")
+    .subtract(60, "days")
+    .format("YYYY-MM-DD 00:00:00");
 
-	const payload = {
+  const payload = {
 
         beginDate: beginDate,
 
@@ -1672,7 +1670,7 @@ app.get("/inventaris-engine", async (req, res) => {
       await new Promise(r =>
         setTimeout(r, 300)
       );
-
+	
     }
 
     // =========================
