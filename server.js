@@ -1139,55 +1139,65 @@ form.append(
           item.id
         );
 
-        result.push({
+       result.push({
 
-          id: d.id || "",
-          waybillId: d.waybillId || "",
-          orderSource: d.orderSourceName || "",
-          customer: d.customerName || "",
-          status: d.orderStatusName || "",
+  id: d.id || "",
 
-          senderName: d.senderName || "",
-          senderPhone: d.senderMobilePhone || "",
-          senderProvince: d.senderProvinceName || "",
-          senderCity: d.senderCityName || "",
-          senderArea: d.senderAreaName || "",
-          senderAddress: d.senderDetailedAddress || "",
+  orderSourceName: d.orderSourceName || "",
+  orderSourceCode: d.orderSourceCode || "",
 
-          receiverName: d.receiverName || "",
-          receiverPhone: d.receiverMobilePhone || "",
-          receiverProvince: d.receiverProvinceName || "",
-          receiverCity: d.receiverCityName || "",
-          receiverArea: d.receiverAreaName || "",
-          receiverAddress: d.receiverDetailedAddress || "",
+  waybillId: d.waybillId || "",
 
-          goodsName: d.goodsName || "",
-          goodsType: d.goodsTypeName || "",
+  customerName: d.customerName || "",
+  customerCode: d.customerCode || "",
 
-          weight: d.packageTotalWeight || 0,
-          packageNumber: d.packageNumber || 0,
+  status: d.orderStatusName || "",
+  statusCode: d.orderStatusCode || "",
 
-          expressType: d.expressTypeName || "",
-          paymentMode: d.paymentModeName || "",
+  senderName: d.senderName || "",
+  senderCompany: d.senderCompany || "",
+  senderPhone: d.senderMobilePhone || "",
+  senderProvince: d.senderProvinceName || "",
+  senderCity: d.senderCityName || "",
+  senderArea: d.senderAreaName || "",
+  senderAddress: d.senderDetailedAddress || "",
 
-          pickNetwork: d.pickNetworkName || "",
-          pickNetworkCode: d.pickNetworkCode || "",
+  receiverName: d.receiverName || "",
+  receiverPhone: d.receiverMobilePhone || "",
+  receiverProvince: d.receiverProvinceName || "",
+  receiverCity: d.receiverCityName || "",
+  receiverArea: d.receiverAreaName || "",
+  receiverAddress: d.receiverDetailedAddress || "",
 
-          proxyArea: d.proxyAreaName || "",
-          proxyAreaCode: d.proxyAreaCode || "",
+  goodsName: d.goodsName || "",
+  goodsType: d.goodsTypeName || "",
 
-          inputTime: d.inputTime || "",
-          dispatchNetworkTime:
-            d.dispatchNetworkTime || "",
+  weight: d.packageTotalWeight || 0,
+  packageNumber: d.packageNumber || 0,
 
-          syncTime:
-            moment()
-              .tz("Asia/Jakarta")
-              .format(
-                "YYYY-MM-DD HH:mm:ss"
-              )
+  expressType: d.expressTypeName || "",
+  expressTypeCode: d.expressTypeCode || "",
 
-        });
+  paymentMode: d.paymentModeName || "",
+
+  sendName: d.sendName || "",
+  sendCode: d.sendCode || "",
+
+  pickNetwork: d.pickNetworkName || "",
+  pickNetworkCode: d.pickNetworkCode || "",
+
+  proxyArea: d.proxyAreaName || "",
+  proxyAreaCode: d.proxyAreaCode || "",
+
+  customerOrderTime: d.customerOrderTime || "",
+  dispatchNetworkTime: d.dispatchNetworkTime || "",
+  inputTime: d.inputTime || "",
+
+  syncTime: moment()
+    .tz("Asia/Jakarta")
+    .format("YYYY-MM-DD HH:mm:ss")
+
+});
 
       } catch (err) {
 
