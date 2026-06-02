@@ -1474,6 +1474,44 @@ app.get("/jfs-detail-full", async (req, res) => {
 
 });
 
+
+    // =========================
+    // RESPONSE
+    // =========================
+    res.json({
+
+      success: true,
+
+      total:
+        finalData.length,
+
+      data:
+        finalData
+
+    });
+
+  } catch (error) {
+
+    console.log(
+      "FULL OPS ERROR:",
+      error.response?.data ||
+      error.message
+    );
+
+    res.status(500).json({
+
+      success: false,
+
+      error:
+        error.response?.data ||
+        error.message
+
+    });
+
+  }
+
+});
+
 // ================= INVENTARIS ENGINE =================
 app.get("/inventaris-engine", async (req, res) => {
 
@@ -1503,11 +1541,23 @@ app.get("/inventaris-engine", async (req, res) => {
       // =========================
       // PAYLOAD
       // =========================
-      const payload = {
 
-        beginDate: "2026-03-28 00:00:00",
+	const endDate = moment()
+ 	 .tz("Asia/Jakarta")
+ 	 .format("YYYY-MM-DD 23:59:59");
 
-        endDate: "2026-05-27 23:59:59",
+	const beginDate = moment()
+  	.tz("Asia/Jakarta")
+ 	 .subtract(60, "days")
+ 	 .format("YYYY-MM-DD 00:00:00");
+
+while (hasMore && current <= maxPage)
+
+	const payload = {
+
+        beginDate: beginDate,
+
+	endDate: endDate,
 
         billCode: "",
 
@@ -1752,11 +1802,16 @@ app.get("/jfs-full-ops-check", async (req, res) => {
     // =========================
     // DATE WIB
     // =========================
-    const date =
-      req.query.date ||
-      moment()
-        .tz("Asia/Jakarta")
-        .format("YYYY-MM-DD");
+    const endDate =
+  moment()
+    .tz("Asia/Jakarta")
+    .format("YYYY-MM-DD");
+
+const startDate =
+  moment()
+    .tz("Asia/Jakarta")
+    .subtract(30, "days")
+    .format("YYYY-MM-DD");
 
     // =========================
     // STEP 1
@@ -1787,10 +1842,10 @@ app.get("/jfs-full-ops-check", async (req, res) => {
         searchType: 1,
 
         startScanTime:
-          `${date} 00:00:00`,
+ 	 `${startDate} 00:00:00`,
 
-        endScanTime:
-          `${date} 23:59:59`
+	endScanTime:
+ 	 `${endDate} 23:59:59`
 
       };
 
@@ -1873,6 +1928,20 @@ app.get("/jfs-full-ops-check", async (req, res) => {
         item => item.checkCode
       );
 
+console.log(
+  "START DATE:",
+  startDate
+);
+
+console.log(
+  "END DATE:",
+  endDate
+);
+
+console.log(
+  "TOTAL CHECK CODE:",
+  checkCodes.length
+);
     console.log(
       "TOTAL CHECK CODE:",
       checkCodes.length
