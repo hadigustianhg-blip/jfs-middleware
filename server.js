@@ -1549,8 +1549,6 @@ app.get("/inventaris-engine", async (req, res) => {
  	 .subtract(60, "days")
  	 .format("YYYY-MM-DD 00:00:00");
 
-while (hasMore && current <= maxPage)
-
 	const payload = {
 
         beginDate: beginDate,
