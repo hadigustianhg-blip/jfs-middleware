@@ -1270,6 +1270,202 @@ form.append(
 
 });
 
+// ================= OPS CHECK INVENTORY =================
+// Alur:
+//   1. Ambil daftar "Nomor Tugas" dari queryOpsCheckForPage
+//   2. Untuk setiap checkCode, ambil detail inventaris
+//   3. Return data detail ke spreadsheet
+//
+// Cara pakai:
+//   GET /jfs-inventory              → otomatis hari ini WIB
+//   GET /jfs-inventory?date=2026-06-02  → tanggal tertentu
+
+app.get("/jfs-inventory", async (req, res) => {
+  try {
+
+    // =========================
+    // CHECK TOKEN
+    // =========================
+    if (!AUTH_TOKEN) {
+      return res.status(400).json({ error: "Token kosong" });
+    }
+
+    // =========================
+    // TANGGAL DINAMIS (default: hari ini WIB)
+    // =========================
+    const date = req.query.date
+      ? req.query.date
+      : moment().tz("Asia/Jakarta").format("YYYY-MM-DD");
+
+    const startScanTime = `${date} 00:00:00`;
+    const endScanTime   = `${date} 23:59:59`;
+
+    console.log(`[INVENTORY] Tanggal: ${date}`);
+
+    // =========================
+    // SHARED HEADERS
+    // =========================
+    const inventoryHeaders = {
+      "Accept":       "application/json, text/plain, */*",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Authtoken":    AUTH_TOKEN,
+      "Lang":         "ID",
+      "Langtype":     "ID",
+      "Routename":    "opsCheckPage",
+      "Origin":       "https://jfs.jtcargo.co.id",
+      "Referer":      "https://jfs.jtcargo.co.id/",
+      "User-Agent":   "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36"
+    };
+
+    // =========================
+    // STEP 1: AMBIL SEMUA NOMOR TUGAS
+    // =========================
+    let allCheckCodes = [];
+    let page1 = 1;
+    let hasMore1 = true;
+
+    console.log("[STEP 1] Ambil Nomor Tugas...");
+
+    while (hasMore1) {
+      const payload = {
+        current:       page1,
+        size:          20,
+        checkCodes:    [],
+        startScanTime: startScanTime,
+        endScanTime:   endScanTime,
+        searchType:    1,
+        countryId:     "1"
+      };
+
+      const res1 = await axios.post(
+        "https://jfsgw.jtcargo.co.id/operatingplatform/opsCheck/queryOpsCheckForPage",
+        payload,
+        { headers: inventoryHeaders }
+      );
+
+      const records = res1?.data?.data?.records || [];
+      console.log(`[STEP 1] Page ${page1}: ${records.length} record`);
+
+      const codes = records
+        .filter(r => r.checkCode)
+        .map(r => r.checkCode);
+
+      allCheckCodes = allCheckCodes.concat(codes);
+
+      if (!records.length || records.length < 20) {
+        hasMore1 = false;
+      } else {
+        page1++;
+      }
+
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    console.log(`[STEP 1] Total Nomor Tugas: ${allCheckCodes.length}`);
+
+    if (!allCheckCodes.length) {
+      return res.json({
+        success: true,
+        date:    date,
+        total:   0,
+        data:    []
+      });
+    }
+
+    // =========================
+    // STEP 2: AMBIL DETAIL PER checkCode
+    // =========================
+    let allDetails = [];
+
+    console.log("[STEP 2] Ambil Detail Inventaris...");
+
+    for (const checkCode of allCheckCodes) {
+
+      let page2 = 1;
+      let hasMore2 = true;
+
+      while (hasMore2) {
+        const detailPayload = {
+          current:   page2,
+          size:      20,
+          checkCode: checkCode,
+          countryId: "1"
+        };
+
+        console.log(`[STEP 2] ${checkCode} Page ${page2}`);
+
+        const res2 = await axios.post(
+          "https://jfsgw.jtcargo.co.id/operatingplatform/opsCheck/queryOpsCheckDetailForPage",
+          detailPayload,
+          { headers: inventoryHeaders }
+        );
+
+        const details = res2?.data?.data?.records || [];
+        console.log(`[STEP 2] ${checkCode} Page ${page2}: ${details.length} detail`);
+
+        // Format data sesuai screenshot
+        const cleaned = details.map(item => ({
+          billCode:            item.billCode            || "",
+          waybillNo:           item.waybillNo           || "",
+          checkCode:           item.checkCode           || "",
+          checkNetworkName:    item.checkNetworkName    || "",
+          checkNetworkCode:    item.checkNetworkCode    || "",
+          status:              item.status              ?? "",
+          checkUser:           item.checkUser           || "",
+          checkTime:           item.checkTime           || "",
+          inStockTime:         item.inStockTime         || "",
+          codMoney:            item.codMoney            || 0,
+          dfodCodMoney:        item.dfodCodMoney        || 0,
+          secondLevelTypeName: item.secondLevelTypeName || "",
+          stockTime:           item.stockTime           || 0,
+          planSignTime:        item.planSignTime        || "",
+          fieldFilled:         item.fieldFilled         ?? "",
+          rebackStatus:        item.rebackStatus        ?? ""
+        }));
+
+        allDetails = allDetails.concat(cleaned);
+
+        if (!details.length || details.length < 20) {
+          hasMore2 = false;
+        } else {
+          page2++;
+        }
+
+        await new Promise(r => setTimeout(r, 300));
+      }
+    }
+
+    // =========================
+    // RESPONSE
+    // =========================
+    console.log(`[INVENTORY] Total Detail: ${allDetails.length}`);
+
+    res.json({
+      success:        true,
+      date:           date,
+      totalCheckCode: allCheckCodes.length,
+      total:          allDetails.length,
+      data:           allDetails
+    });
+
+  } catch (error) {
+
+    console.error("[ERROR INVENTORY]", error.response?.data || error.message);
+
+    if (error.response?.data?.code === 401) {
+      return res.status(401).json({
+        error:  "TOKEN EXPIRED",
+        detail: "Silakan update token JFS"
+      });
+    }
+
+    res.status(500).json({
+      error:  "Gagal ambil data inventory",
+      detail: error.response?.data || error.message
+    });
+  }
+});
+
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
