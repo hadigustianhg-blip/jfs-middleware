@@ -1697,6 +1697,82 @@ app.get("/jtc-test-online-check", async (req, res) => {
   }
 });
 
+// ================= JTC OUT SEARCH EXISTS - READ ONLY =================
+app.get("/jtc-test-search-exists", async (req, res) => {
+  try {
+    const waybill = String(req.query.waybill || "").trim();
+
+    if (!waybill) {
+      return res.status(400).json({
+        success: false,
+        error: "waybill wajib diisi"
+      });
+    }
+
+    if (!JTC_OUT_AUTH_TOKEN || !JTC_OUT_DEVICE_ID) {
+      return res.status(500).json({
+        success: false,
+        error: "JTC OUT environment belum lengkap"
+      });
+    }
+
+    const response = await axios.post(
+      "https://jfsgw.jtcargo.co.id/bc/waybillOrder/searchExists",
+      {
+        waybillNo: waybill
+      },
+      {
+        headers: {
+          "Accept": "application/json",
+          "Accept-Encoding": "gzip",
+          "Content-Type": "application/json; charset=UTF-8",
+
+          "App-Channel": "Internal Deliver",
+          "App-Platform": "Android_com.jtexpress.idnout",
+          "App-Version": JTC_OUT_APP_VERSION,
+
+          "authToken": JTC_OUT_AUTH_TOKEN,
+
+          "Device-ID": JTC_OUT_DEVICE_ID,
+          "Device-Name": "google sdk_gphone_x86_64",
+          "Device-Version": "Android-30",
+
+          "devicefrom": "android",
+          "langType": "ID",
+          "system-code": "IDN-OUTAPP",
+
+          "User-Agent":
+            "Android-google sdk_gphone_x86_64/app_out"
+        },
+
+        timeout: 15000
+      }
+    );
+
+    res.json({
+      success: true,
+      mode: "SEARCH_EXISTS_ONLY",
+      waybill,
+      sentPayload: {
+        waybillNo: waybill
+      },
+      response: response.data
+    });
+
+  } catch (error) {
+    console.error(
+      "JTC OUT SEARCH EXISTS ERROR:",
+      error.response?.data || error.message
+    );
+
+    res.status(500).json({
+      success: false,
+      mode: "SEARCH_EXISTS_ONLY",
+      error: error.response?.data || error.message
+    });
+  }
+});
+
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
