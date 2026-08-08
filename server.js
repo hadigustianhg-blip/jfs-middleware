@@ -1637,6 +1637,66 @@ app.get("/jtc-test-waybill-detail", async (req, res) => {
   }
 });
 
+// ================= JTC OUT ONLINE CHECK - TEST =================
+app.get("/jtc-test-online-check", async (req, res) => {
+  try {
+    const waybill = String(req.query.waybill || "").trim();
+
+    if (!waybill) {
+      return res.status(400).json({
+        success: false,
+        error: "waybill wajib diisi"
+      });
+    }
+
+    const payload = {
+      suspend: 1,
+      waybillIds: [waybill],
+      scanningTypeCode: "94"
+    };
+
+    const response = await axios.post(
+      "https://jfsgw.jtcargo.co.id/bc/waybillScan/onlineCheckForInner",
+      payload,
+      {
+        headers: {
+          "Accept": "application/json",
+          "Accept-Encoding": "gzip",
+          "App-Channel": "Internal Deliver",
+          "App-Platform": "Android_com.jtexpress.idnout",
+          "App-Version": JTC_OUT_APP_VERSION,
+          "authToken": JTC_OUT_AUTH_TOKEN,
+          "Content-Type": "application/json; charset=UTF-8",
+          "Device-ID": JTC_OUT_DEVICE_ID,
+          "Device-Name": "google sdk_gphone_x86_64",
+          "Device-Version": "Android-30",
+          "devicefrom": "android",
+          "langType": "ID",
+          "system-code": "IDN-OUTAPP",
+          "User-Agent": "Android-google sdk_gphone_x86_64/app_out"
+        },
+
+        timeout: 15000
+      }
+    );
+
+    res.json({
+      success: true,
+      mode: "VALIDATION_ONLY",
+      waybill,
+      sentPayload: payload,
+      response: response.data
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      mode: "VALIDATION_ONLY",
+      error: error.response?.data || error.message
+    });
+  }
+});
+
 // ================= PORT =================
 const PORT = process.env.PORT || 3000;
 
