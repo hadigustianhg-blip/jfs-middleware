@@ -1598,28 +1598,13 @@ app.get("/jtc-test-waybill-detail", async (req, res) => {
 
     const d = response?.data?.data || {};
 
-    res.json({
-      success: true,
-      mode: "READ_ONLY",
-      waybill: waybill,
-      data: {
-        id: d.id || "",
-        waybillNo: d.waybillNo || "",
-        waybillStatusCode: d.waybillStatusCode || "",
-        dispatchNetworkId: d.dispatchNetworkId || "",
-        dispatchNetworkCode: d.dispatchNetworkCode || "",
-        dispatchNetworkName: d.dispatchNetworkName || "",
-        dispatchStaffCode: d.dispatchStaffCode || "",
-        dispatchStaffName: d.dispatchStaffName || "",
-        dispatchTime: d.dispatchTime || "",
-        receiverCityName: d.receiverCityName || "",
-        destinationName: d.destinationName || "",
-        expressTypeName: d.expressTypeName || "",
-        settlementName: d.settlementName || "",
-        codNeed: d.codNeed || 0,
-        codMoney: d.codMoney || 0
-      }
-    });
+   res.json({
+  success: true,
+  mode: "READ_ONLY_DEBUG",
+  waybill: waybill,
+  axiosDataType: typeof response.data,
+  raw: response.data
+});
 
   } catch (error) {
     console.error(
