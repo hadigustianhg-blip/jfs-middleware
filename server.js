@@ -11,7 +11,10 @@ app.use(express.json());
 
 // 🔐 TOKEN
 let AUTH_TOKEN = process.env.AUTH_TOKEN || "";
-
+// 🔐 J&T Cargo OUT APP
+const JTC_OUT_AUTH_TOKEN = process.env.JTC_OUT_AUTH_TOKEN || "";
+const JTC_OUT_DEVICE_ID = process.env.JTC_OUT_DEVICE_ID || "";
+const JTC_OUT_APP_VERSION = process.env.JTC_OUT_APP_VERSION || "";
 // ================= ROOT =================
 app.get("/", (req, res) => {
   res.send("API JFS Middleware (Pickup + Dispatch) 🚀");
